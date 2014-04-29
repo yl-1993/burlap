@@ -1,2 +1,23 @@
 Testing with map: 10world.map
 	VI,800.0,-8.0,true
+	RTDP,847.0,-8.0,true
+	SG,526.0,-507.0,true
+	AFFVI,800.0,-10.0,true
+	AFFRTDP,788.0,-26.0,true
+	AFFSG,798.0,-110.0,true
+
+Testing with map: mazeworld.map
+	VI,4266.0,-23.0,true
+	RTDP,99559.0,-199.0,false
+	SG,6725.0,-615.0,false
+	AFFVI,4424.0,-22.0,true
+	AFFRTDP,3612.0,-199.0,false
+	AFFSG,1529.0,-224.0,true
+
+Testing with map: hardworld.map
+	VI,16588.0,-25.0,true
+	RTDP,8235.0,-56.0,true
+	SG,3033.0,-44.0,true
+	AFFVI,130410.0,-26.0,true
+	AFFRTDP,1450.0,-298.0,false
+	AFFSG,2968.0,-36.0,true

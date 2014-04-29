@@ -656,6 +656,7 @@ public class MinecraftBehavior {
 		
 		// ----- DEFINE ACTION SETS -----
 		
+
 		ArrayList<Action> isPlaneFActions = new ArrayList<Action>();
 		isPlaneFActions.add(this.mcdg.forward);
 		isPlaneFActions.add(this.mcdg.jump);
@@ -725,7 +726,9 @@ public class MinecraftBehavior {
 		ArrayList<Action> isAdjFurnaceActions = new ArrayList<Action>();
 		isAdjFurnaceActions.add(this.mcdg.placeGoldOre);
 		
+		
 		// ----- DEFINE AFFORDANCES -----
+
 		Affordance affIsPlaneF = new Affordance(this.pfIsPlaneF, this.pfIsAtGoal, isPlaneFActions);
 		Affordance affIsPlaneB = new Affordance(this.pfIsPlaneB, this.pfIsAtGoal, isPlaneBActions);
 		Affordance affIsPlaneR = new Affordance(this.pfIsPlaneR, this.pfIsAtGoal, isPlaneRActions);
@@ -740,7 +743,7 @@ public class MinecraftBehavior {
 		Affordance affIsDstableWallB = new Affordance(this.pfIsDstableWallB, this.pfIsAtGoal, isDstableWallBActions);
 		Affordance affIsDstableWallR = new Affordance(this.pfIsDstableWallR, this.pfIsAtGoal, isDstableWallRActions);
 		Affordance affIsDstableWallL = new Affordance(this.pfIsDstableWallL, this.pfIsAtGoal, isDstableWallLActions);
-		
+
 		Affordance affIsAdjDoor = new Affordance(this.pfIsAdjDoor, this.pfIsAtGoal, isDoorActions);
 		Affordance affIsAdjFurnace = new Affordance(this.pfIsAdjFurnace, this.pfIsAtGoal, isAdjFurnaceActions);
 		Affordance affIsOnGoldOre = new Affordance(this.pfIsOnGoldOre, this.pfIsAtGoal, isOnGoldOreActions);
@@ -842,8 +845,6 @@ public class MinecraftBehavior {
 
 		File[] files = new File("maps/" + dir).listFiles();
 
-//		String[] planners = {"SG", "AFFVI", "AFFSG", "AFFRTDP"}; 
-		
 	
 		double[] info = null;
 		
@@ -923,7 +924,6 @@ public class MinecraftBehavior {
 //		}
 		
 		
-		
 		// Setup Minecraft World
 		MinecraftBehavior mcb = new MinecraftBehavior("specific_test/newjumpworld.map");
 		
@@ -933,6 +933,7 @@ public class MinecraftBehavior {
 		double[] numUpdates = {0.0};
 		int numRollouts = 1000;
 		int maxDepth = 250;
+
 		// VANILLA OOMDP/VI
 		numUpdates = mcb.ValueIterationPlanner();
 		System.out.println("VI: " + numUpdates[0]);
@@ -949,9 +950,13 @@ public class MinecraftBehavior {
 //		 numUpdates = mcb.AffordanceVIPlanner(kb);
 		
 		// AFFORDANCE - RTDP
-//		 ArrayList<Affordance> kb = mcb.generateAffordanceKB();
-//		 numUpdates = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, kb);
-		
+//		 ArrayList<Affordance> kb = mcb.generateAffordanceKB(worldName);
+//		 double[] results = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, kb);
+//		 
+//		 numUpdates = results;
+//		
+//		 System.out.println(results[0] + "," + results[1] + "," + results[2]);
+		 
 		// AFFORDANCE - SG
 //		 ArrayList<Affordance> kb = mcb.generateAffordanceKB();
 //		 ArrayList<Subgoal> subgoals = mcb.generateSubgoalKB();
