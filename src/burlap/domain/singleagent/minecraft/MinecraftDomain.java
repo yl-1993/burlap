@@ -31,9 +31,9 @@ public class MinecraftDomain implements DomainGenerator{
 	public static final String 					ATTDEST = "attDestroyable";
 	public static final String					ATTBLKNUM = "bNum";
 	public static final String					ATTDOOROPEN = "doorOpen";
-	public static final String					ATTGRAIN = "isGrain";
-	public static final String					ATTAGHASGRAIN = "agentHasGrain";
-	public static final String					ATTAGHASBREAD = "agentHasBread";
+	public static final String					ATTGOLDORE = "isGoldOre";
+	public static final String					ATTAGHASGOLDORE = "agentHasGoldOre";
+	public static final String					ATTAGHASGOLDBLOCK = "agentHasGoldBlock";
 	
 	// ----- ACTION STRINGS -----
 	public static final String					ACTIONFORWARD = "forward";
@@ -57,19 +57,14 @@ public class MinecraftDomain implements DomainGenerator{
 	public static final String					ACTIONOPENR = "openRight";
 	public static final String					ACTIONOPENL = "openLeft";
 	
-	public static final String					ACTIONGRAIN = "pickUpGrain";
-	
-//	public static final String					ACTIONUSEOVENF = "useOvenForward";
-//	public static final String					ACTIONUSEOVENB = "useOvenBack";
-//	public static final String					ACTIONUSEOVENR = "useOvenRight";
-//	public static final String					ACTIONUSEOVENL = "useOvenLeft";
+	public static final String					ACTIONGOLDORE = "pickUpGoldOre";
 	
 	public static final String					ACTIONJUMP = "jump";
 //	public static final String					ACTIONJUMPB = "jumpB";
 //	public static final String					ACTIONJUMPR = "jumpR";
 //	public static final String					ACTIONJUMPL = "jumpL";
 
-	public static final String					ACTIONPLACEGRAIN = "PlaceGrain";
+	public static final String					ACTIONPLACEGOLDORE = "PlaceGoldOre";
 
 	// ----- ACTIONS -----
 	public Action								forward;
@@ -89,8 +84,8 @@ public class MinecraftDomain implements DomainGenerator{
 	public Action								openB;
 	public Action								openR;
 	public Action								openL;
-	public Action								pickUpGrain;
-	public Action								placeGrain;
+	public Action								pickUpGoldOre;
+	public Action								placeGoldOre;
 	public Action								jump;
 //	public Action								jumpB;
 //	public Action								jumpR;
@@ -109,11 +104,11 @@ public class MinecraftDomain implements DomainGenerator{
 	public static final String					ISPLANE = "IsAdjPlane";
 	public static final String					ISADJTRENCH = "IsAdjTrench";
 	public static final String 					ISADJDOOR = "IsAdjDoor";
-	public static final String 					ISADJOVEN = "IsAdjOven";
-	public static final String 					ISONGRAIN = "IsOnGrain";
+	public static final String 					ISADJFURNACE = "IsAdjFurnace";
+	public static final String 					ISONGOLDORE = "IsOnGoldOre";
 	public static final String 					ISINLAVA = "IsInLava";
 	public static final String					ISADJDWALL = "IsAdjDstableWall";
-	public static final String 					AGENTHASBREAD = "AgentHasBread";
+	public static final String 					AGENTHASGOLDBLOCK = "AgentHasGoldBlock";
 	public static final String 					ISDOOROPEN = "IsDoorOpen";
 
 	// ----- CONSTANTS -----
@@ -121,7 +116,7 @@ public class MinecraftDomain implements DomainGenerator{
 	public static final String					CLASSGOAL = "goal";
 	public static final String					CLASSBLOCK = "block";
 	public static final String					CLASSDOOR = "door";
-	public static final String					CLASSOVEN = "oven";
+	public static final String					CLASSFURNACE = "furnace";
 	public static final String					CLASSLAVA = "lava";
 	public static int							MAXX = 14; // 0 - 9, gives us a 10x10 surface
 	public static int							MAXY = 14;
@@ -180,15 +175,15 @@ public class MinecraftDomain implements DomainGenerator{
 		Attribute dooropenatt = new Attribute(DOMAIN, ATTDOOROPEN, Attribute.AttributeType.DISC);
 		dooropenatt.setDiscValuesForRange(0, 1, 1);
 		
-		Attribute isgrainatt = new Attribute(DOMAIN, ATTGRAIN, Attribute.AttributeType.DISC);
-		isgrainatt.setDiscValuesForRange(0, 1, 1);
+		Attribute isgoldoreatt = new Attribute(DOMAIN, ATTGOLDORE, Attribute.AttributeType.DISC);
+		isgoldoreatt.setDiscValuesForRange(0, 1, 1);
 		
-		Attribute hasgrainatt = new Attribute(DOMAIN, ATTAGHASGRAIN, Attribute.AttributeType.DISC);
-		hasgrainatt.setDiscValuesForRange(0, 1, 1);
+		Attribute hasgoldoreatt = new Attribute(DOMAIN, ATTAGHASGOLDORE, Attribute.AttributeType.DISC);
+		hasgoldoreatt.setDiscValuesForRange(0, 1, 1);
 //		 String actionSequenc
 
-		Attribute hasbreadatt = new Attribute(DOMAIN, ATTAGHASBREAD, Attribute.AttributeType.DISC);
-		hasbreadatt.setDiscValuesForRange(0, 1, 1);
+		Attribute hasgoldblockatt = new Attribute(DOMAIN, ATTAGHASGOLDBLOCK, Attribute.AttributeType.DISC);
+		hasgoldblockatt.setDiscValuesForRange(0, 1, 1);
 
 		
 		// CREATE AGENT
@@ -197,8 +192,8 @@ public class MinecraftDomain implements DomainGenerator{
 		agentClass.addAttribute(yatt);
 		agentClass.addAttribute(zatt);
 		agentClass.addAttribute(blknumatt);
-		agentClass.addAttribute(hasgrainatt);
-		agentClass.addAttribute(hasbreadatt);
+		agentClass.addAttribute(hasgoldoreatt);
+		agentClass.addAttribute(hasgoldblockatt);
 		
 		// CREATE GOAL
 		ObjectClass goalClass = new ObjectClass(DOMAIN, CLASSGOAL);
@@ -212,7 +207,7 @@ public class MinecraftDomain implements DomainGenerator{
 		blockClass.addAttribute(yatt);
 		blockClass.addAttribute(zatt);
 		blockClass.addAttribute(destroyableatt);
-		blockClass.addAttribute(isgrainatt);
+		blockClass.addAttribute(isgoldoreatt);
 		
 		// CREATE DOORS
 		ObjectClass doorClass = new ObjectClass(DOMAIN, CLASSDOOR);
@@ -221,11 +216,11 @@ public class MinecraftDomain implements DomainGenerator{
 		doorClass.addAttribute(zatt);
 		doorClass.addAttribute(dooropenatt);
 		
-		// CREATE OVENS
-		ObjectClass ovenClass = new ObjectClass(DOMAIN, CLASSOVEN);
-		ovenClass.addAttribute(xatt);
-		ovenClass.addAttribute(yatt);
-		ovenClass.addAttribute(zatt);
+		// CREATE FURNACES
+		ObjectClass furnaceClass = new ObjectClass(DOMAIN, CLASSFURNACE);
+		furnaceClass.addAttribute(xatt);
+		furnaceClass.addAttribute(yatt);
+		furnaceClass.addAttribute(zatt);
 		
 		// CREATE LAVA
 		ObjectClass lavaClass = new ObjectClass(DOMAIN, CLASSLAVA);
@@ -268,11 +263,11 @@ public class MinecraftDomain implements DomainGenerator{
 			this.openR = new OpenActionL(ACTIONOPENR, DOMAIN, "");
 			this.openL = new OpenActionR(ACTIONOPENL, DOMAIN, "");
 
-			// Pick Up Grain
-			this.pickUpGrain = new pickUpGrainAction(ACTIONGRAIN, DOMAIN, "");
+			// Pick Up Gold Ore
+			this.pickUpGoldOre = new pickUpGoldOreAction(ACTIONGOLDORE, DOMAIN, "");
 			
-			// Use Oven
-			this.placeGrain = new placeGrainAction(ACTIONPLACEGRAIN, DOMAIN, "");
+			// Use Furnace
+			this.placeGoldOre = new placeGoldOreAction(ACTIONPLACEGOLDORE, DOMAIN, "");
 
 			// Jump
 			this.jump = new JumpAction(ACTIONJUMP, DOMAIN, "");
@@ -301,7 +296,7 @@ public class MinecraftDomain implements DomainGenerator{
 		block.setValue(ATTY, y);
 		block.setValue(ATTZ, z);
 		block.setValue(ATTDEST, 1); // blocks you place can be destroyed
-		block.setValue(ATTGRAIN, 0); // Block is not grain.
+		block.setValue(ATTGOLDORE, 0); // Block is not gold ore.
 		s.addObject(block);
 	}
 	
@@ -387,11 +382,11 @@ public class MinecraftDomain implements DomainGenerator{
 		}
 	}
 	
-	public static boolean isAdjOven(State st, int ax, int ay, int az) {
+	public static boolean isAdjFurnace(State st, int ax, int ay, int az) {
 		// Returns true if the block in front of, behind, to the left of, or to the right of the agent contains a door
 
-		if ((isInstanceOfAt(st, ax + 1, ay, az, CLASSOVEN)) || (isInstanceOfAt(st, ax - 1, ay, az, CLASSOVEN))
-				|| (isInstanceOfAt(st, ax, ay + 1, az, CLASSOVEN)) || (isInstanceOfAt(st, ax, ay - 1, az, CLASSOVEN))) {
+		if ((isInstanceOfAt(st, ax + 1, ay, az, CLASSFURNACE)) || (isInstanceOfAt(st, ax - 1, ay, az, CLASSFURNACE))
+				|| (isInstanceOfAt(st, ax, ay + 1, az, CLASSFURNACE)) || (isInstanceOfAt(st, ax, ay - 1, az, CLASSFURNACE))) {
 				return true;
 			}
 		else {
@@ -727,10 +722,10 @@ public class MinecraftDomain implements DomainGenerator{
 		}
 
 		ObjectInstance block = getBlockAt(s, bx, by, bz);
-		if ((block != null) && (block.getDiscValForAttribute(ATTGRAIN) == 1)) {
-			// The block we're on "contain's grain", so "pick it up"
-			agent.setValue(ATTAGHASGRAIN, 1);
-			block.setValue(ATTGRAIN, 0);
+		if ((block != null) && (block.getDiscValForAttribute(ATTGOLDORE) == 1)) {
+			// The block we're on "contain's gold ore", so "pick it up"
+			agent.setValue(ATTAGHASGOLDORE, 1);
+			block.setValue(ATTGOLDORE, 0);
 		}
 		else {
 			return;
@@ -739,7 +734,7 @@ public class MinecraftDomain implements DomainGenerator{
 		
 	}
 
-	public static void placeGrain(State st) {
+	public static void placeGoldOre(State st) {
 		
 		ObjectInstance agent = st.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		
@@ -748,15 +743,15 @@ public class MinecraftDomain implements DomainGenerator{
 		int ay = agent.getDiscValForAttribute(ATTY);
 		int az = agent.getDiscValForAttribute(ATTZ);
 		
-		if (agent.getDiscValForAttribute(ATTAGHASGRAIN) == 1) {
-			agent.setValue(ATTAGHASGRAIN, 0);  // Remove grain from agent
+		if (agent.getDiscValForAttribute(ATTAGHASGOLDORE) == 1) {
+			agent.setValue(ATTAGHASGOLDORE, 0);  // Remove gold ore from agent
 			
-			if (isAdjOven(st, ax, ay, az)) {
-				agent.setValue(ATTAGHASBREAD, 1);				
+			if (isAdjFurnace(st, ax, ay, az)) {
+				agent.setValue(ATTAGHASGOLDBLOCK, 1);				
 			} else {
-				// Put the grain "on the ground"
+				// Put the gold ore "on the ground"
 				ObjectInstance belowBlock = st.getObject("block" + ax + ay + (az-1));
-				belowBlock.setValue(ATTGRAIN, 1);
+				belowBlock.setValue(ATTGOLDORE, 1);
 			}
 		}
 		return;
@@ -1013,9 +1008,9 @@ public class MinecraftDomain implements DomainGenerator{
 		}	
 	}
 	
-	public static class pickUpGrainAction extends Action{
+	public static class pickUpGoldOreAction extends Action{
 
-		public pickUpGrainAction(String name, Domain domain, String parameterClasses){
+		public pickUpGoldOreAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
@@ -1028,14 +1023,14 @@ public class MinecraftDomain implements DomainGenerator{
 		}	
 	}
 	
-	public static class placeGrainAction extends Action{
+	public static class placeGoldOreAction extends Action{
 
-		public placeGrainAction(String name, Domain domain, String parameterClasses){
+		public placeGoldOreAction(String name, Domain domain, String parameterClasses){
 			super(name, domain, parameterClasses);
 		}
 		
 		protected State performActionHelper(State st, String[] params) {
-			placeGrain(st);
+			placeGoldOre(st);
 			fall(st);
 //			System.out.println("Action Performed: " + this.name);
 			return st;
@@ -1409,40 +1404,40 @@ public class MinecraftDomain implements DomainGenerator{
 		
 	}
 	
-	public static class AgentHasBreadPF extends PropositionalFunction{
+	public static class AgentHasGoldBlockPF extends PropositionalFunction{
 
-		public AgentHasBreadPF(String name, Domain domain, String[] parameterClasses) {
+		public AgentHasGoldBlockPF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
 			ObjectInstance agent = st.getObject(CLASSAGENT + "0");
-			return (agent.getDiscValForAttribute(ATTAGHASBREAD) == 1);
+			return (agent.getDiscValForAttribute(ATTAGHASGOLDBLOCK) == 1);
 		}
 		@Override
 		public boolean isTrue(State st) {
 			ObjectInstance agent = st.getObject(CLASSAGENT + "0");
-			return (agent.getDiscValForAttribute(ATTAGHASBREAD) == 1);
+			return (agent.getDiscValForAttribute(ATTAGHASGOLDBLOCK) == 1);
 		}
 		
 	}
 	
-	public static class AgentHasGrainPF extends PropositionalFunction{
+	public static class AgentHasGoldOrePF extends PropositionalFunction{
 
-		public AgentHasGrainPF(String name, Domain domain, String[] parameterClasses) {
+		public AgentHasGoldOrePF(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 
 		@Override
 		public boolean isTrue(State st, String[] params) {
 			ObjectInstance agent = st.getObject(CLASSAGENT + "0");
-			return (agent.getDiscValForAttribute(ATTAGHASGRAIN) == 1);
+			return (agent.getDiscValForAttribute(ATTAGHASGOLDORE) == 1);
 		}
 		@Override
 		public boolean isTrue(State st) {
 			ObjectInstance agent = st.getObject(CLASSAGENT + "0");
-			return (agent.getDiscValForAttribute(ATTAGHASGRAIN) == 1);
+			return (agent.getDiscValForAttribute(ATTAGHASGOLDORE) == 1);
 		}
 		
 	}
@@ -1619,9 +1614,9 @@ public class MinecraftDomain implements DomainGenerator{
 		}
 		
 	}
-	public static class IsAdjOven extends PropositionalFunction {
+	public static class IsAdjFurnace extends PropositionalFunction {
 
-		public IsAdjOven(String name, Domain domain, String[] parameterClasses) {
+		public IsAdjFurnace(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 		
@@ -1641,7 +1636,7 @@ public class MinecraftDomain implements DomainGenerator{
 			int az = agent.getDiscValForAttribute(ATTZ);
 
 			
-			if (isAdjOven(st, ax, ay, az)) {
+			if (isAdjFurnace(st, ax, ay, az)) {
 				return true;
 			}
 			else {
@@ -1651,9 +1646,9 @@ public class MinecraftDomain implements DomainGenerator{
 		
 	}
 	
-	public static class IsOnGrain extends PropositionalFunction {
+	public static class IsOnGoldOre extends PropositionalFunction {
 
-		public IsOnGrain(String name, Domain domain, String[] parameterClasses) {
+		public IsOnGoldOre(String name, Domain domain, String[] parameterClasses) {
 			super(name, domain, parameterClasses);
 		}
 		
@@ -1673,7 +1668,7 @@ public class MinecraftDomain implements DomainGenerator{
 			int az = agent.getDiscValForAttribute(ATTZ);
 
 			
-			if (getBlockAt(st, ax, ay, az - 1) != null && getBlockAt(st, ax, ay, az - 1).getDiscValForAttribute(ATTGRAIN) == 1) {
+			if (getBlockAt(st, ax, ay, az - 1) != null && getBlockAt(st, ax, ay, az - 1).getDiscValForAttribute(ATTGOLDORE) == 1) {
 				return true;
 			}
 			else {
@@ -1804,12 +1799,8 @@ public class MinecraftDomain implements DomainGenerator{
 		exp.addActionShortHand("ob", ACTIONOPENB);
 		exp.addActionShortHand("or", ACTIONOPENR);
 		exp.addActionShortHand("ol", ACTIONOPENL);
-		exp.addActionShortHand("pu", ACTIONGRAIN);
-		exp.addActionShortHand("pg", ACTIONPLACEGRAIN);
-//		exp.addActionShortHand("bbf", ACTIONUSEOVENF);
-//		exp.addActionShortHand("bbb", ACTIONUSEOVENB);
-//		exp.addActionShortHand("bbl", ACTIONUSEOVENL);
-//		exp.addActionShortHand("bbr", ACTIONUSEOVENR);
+		exp.addActionShortHand("pu", ACTIONGOLDORE);
+		exp.addActionShortHand("pg", ACTIONPLACEGOLDORE);
 		
 		exp.addActionShortHand("jf", ACTIONJUMP);
 //		exp.addActionShortHand("jb", ACTIONJUMPB);

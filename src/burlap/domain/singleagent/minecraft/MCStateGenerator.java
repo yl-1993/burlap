@@ -35,8 +35,8 @@ public class MCStateGenerator {
 	private static final char dummySym = '.';
 	private static final char wallSym = '=';
 	private static final char doorSym = 'd';
-	private static final char grainSym = '*';
-	private static final char ovenSym = 'o';
+	private static final char goldOreSym = '*';
+	private static final char furnaceSym = 'o';
 	private static final char lavaSym = 'V';
 	private static final char twoBlockSym = '^';
 	private int numRows;
@@ -184,13 +184,13 @@ public class MCStateGenerator {
 				addDoor(s, d, ncol, nrow, 2);
 				ncol++;
 				break;
-			case grainSym:
+			case goldOreSym:
 				addIndBlock(s, d, ncol, nrow, 0);
-				addGrain(s, d, ncol, nrow, 1);
+				addGoldOre(s, d, ncol, nrow, 1);
 				ncol++;
 				break;
-			case ovenSym:
-				addOven(s, d, ncol, nrow, 2);
+			case furnaceSym:
+				addFurnace(s, d, ncol, nrow, 2);
 				ncol++;
 				break;
 			case lavaSym:
@@ -207,7 +207,7 @@ public class MCStateGenerator {
 		wall.setValue("x", x);
 		wall.setValue("y", y);
 		wall.setValue("z", z);
-		wall.setValue("isGrain", 0); //
+		wall.setValue("isGoldOre", 0); //
 		wall.setValue("attDestroyable", 0); // Walls cannot be destroyed
 		s.addObject(wall);
 	}
@@ -221,22 +221,22 @@ public class MCStateGenerator {
 		s.addObject(door);
 	}
 	
-	private static void addGrain(State s, Domain d, int x, int y, int z) {
-		ObjectInstance grain = new ObjectInstance(d.getObjectClass("block"), "block"+x+y+z);
-		grain.setValue("x", x);
-		grain.setValue("y", y);
-		grain.setValue("z", z);
-		grain.setValue("isGrain", 1); // door is closed at first.
-		grain.setValue("attDestroyable", 1); // By default blocks can be destroyed
-		s.addObject(grain);
+	private static void addGoldOre(State s, Domain d, int x, int y, int z) {
+		ObjectInstance goldOre = new ObjectInstance(d.getObjectClass("block"), "block"+x+y+z);
+		goldOre.setValue("x", x);
+		goldOre.setValue("y", y);
+		goldOre.setValue("z", z);
+		goldOre.setValue("isGoldOre", 1); // door is closed at first.
+		goldOre.setValue("attDestroyable", 1); // By default blocks can be destroyed
+		s.addObject(goldOre);
 	}
 	
-	private static void addOven(State s, Domain d, int x, int y, int z) {
-		ObjectInstance oven = new ObjectInstance(d.getObjectClass("oven"), "oven"+x+y+z);
-		oven.setValue("x", x);
-		oven.setValue("y", y);
-		oven.setValue("z", z);
-		s.addObject(oven);
+	private static void addFurnace(State s, Domain d, int x, int y, int z) {
+		ObjectInstance furnace = new ObjectInstance(d.getObjectClass("furnace"), "furnace"+x+y+z);
+		furnace.setValue("x", x);
+		furnace.setValue("y", y);
+		furnace.setValue("z", z);
+		s.addObject(furnace);
 	}
 	
 	private static void addBlock(State s, Domain d, int x, int y, int z) {
@@ -244,7 +244,7 @@ public class MCStateGenerator {
 		block.setValue("x", x);
 		block.setValue("y", y);
 		block.setValue("z", z);
-		block.setValue("isGrain", 0); //
+		block.setValue("isGoldOre", 0); //
 		block.setValue("attDestroyable", 1); // By default blocks can be destroyed
 		s.addObject(block);
 	}
@@ -257,8 +257,8 @@ public class MCStateGenerator {
 	private static void addAgent(State s, Domain d, int x, int y, int z, int agentNumBlocks) {
 		ObjectInstance agent = new ObjectInstance(d.getObjectClass("agent"), "agent0");
 		agent.setValue("bNum", agentNumBlocks);  // Expliticly set the number of blocks agent can carry to 1
-		agent.setValue("agentHasGrain", 0);
-		agent.setValue("agentHasBread", 0);
+		agent.setValue("agentHasGoldOre", 0);
+		agent.setValue("agentHasGoldBlock", 0);
 		addObject(agent, s, d, x, y, z);
 	}
 

@@ -64,7 +64,7 @@ public class MinecraftBehavior {
 	DiscreteStateHashFactory	hashingFactory;
 	
 	static PropositionalFunction		pfAgentAtGoal;
-	static PropositionalFunction 		pfAgentHasBread;
+	static PropositionalFunction 		pfAgentHasGoldBlock;
 	static PropositionalFunction 		pfAgentNotInWorld;
 
 	PropositionalFunction		pfIsPlane;
@@ -78,8 +78,8 @@ public class MinecraftBehavior {
 	PropositionalFunction		pfIsAtLocation;
 	PropositionalFunction		pfIsWalkable;
 	PropositionalFunction 		pfIsAdjDstableWall;
-	PropositionalFunction		pfIsAdjOven;
-	PropositionalFunction		pfIsOnGrain;
+	PropositionalFunction		pfIsAdjFurnace;
+	PropositionalFunction		pfIsOnGoldOre;
 	PropositionalFunction  		pfIsInLava;
 	PropositionalFunction		pfIsTrenchF;
 	PropositionalFunction		pfIsTrenchB;
@@ -194,12 +194,12 @@ public class MinecraftBehavior {
 		pfIsAdjDoor = new IsAdjDoor(this.mcdg.ISADJDOOR, this.mcdg.DOMAIN,
 				new String[]{this.mcdg.CLASSAGENT});
 		
-		pfIsAdjOven = new IsAdjOven(this.mcdg.ISADJOVEN, this.mcdg.DOMAIN,
+		pfIsAdjFurnace = new IsAdjFurnace(this.mcdg.ISADJFURNACE, this.mcdg.DOMAIN,
 				new String[]{this.mcdg.CLASSAGENT});
 		
 		// ===== MISC =====
 		
-		pfIsOnGrain = new IsOnGrain(this.mcdg.ISONGRAIN, this.mcdg.DOMAIN,
+		pfIsOnGoldOre = new IsOnGoldOre(this.mcdg.ISONGOLDORE, this.mcdg.DOMAIN,
 				new String[]{this.mcdg.CLASSAGENT});
 		
 		pfIsInLava = new IsInLava(this.mcdg.ISINLAVA, this.mcdg.DOMAIN,
@@ -232,7 +232,7 @@ public class MinecraftBehavior {
 		pfIsWalkable = new IsWalkablePF(this.mcdg.ISWALK, this.mcdg.DOMAIN,
 				new String[]{"Integer", "Integer", "Integer"});
 
-		pfAgentHasBread = new AgentHasBreadPF(this.mcdg.AGENTHASBREAD, this.mcdg.DOMAIN,
+		pfAgentHasGoldBlock = new AgentHasGoldBlockPF(this.mcdg.AGENTHASGOLDBLOCK, this.mcdg.DOMAIN,
 				new String[]{this.mcdg.CLASSAGENT});
 		
 		pfAgentAtGoal = new AtGoalPF(this.mcdg.PFATGOAL, this.mcdg.DOMAIN,
@@ -249,7 +249,7 @@ public class MinecraftBehavior {
 		rewardTable = new HashMap<PropositionalFunction, Double>();
 		rewardTable.put(pfAgentAtGoal, (Double) goalReward);
 		rewardTable.put(pfAgentNotInWorld, (Double) 1.0 - 99999999.9);
-		rewardTable.put(pfAgentHasBread, (Double) goalReward);
+		rewardTable.put(pfAgentHasGoldBlock, (Double) goalReward);
 		Double lavaRew = -100.0;
 		rewardTable.put(pfIsInLava, lavaRew);
 		
@@ -489,12 +489,12 @@ public class MinecraftBehavior {
 			result.add(doorOpen);
 		}
 	
-		// Breadworld subgoals
-		if (worldName.contains("bread")) {
-			PropositionalFunction hasGrainPF = new AgentHasGrainPF(MinecraftDomain.ATTAGHASGRAIN, this.mcdg.DOMAIN,
+		// Goldworld subgoals
+		if (worldName.contains("gold")) {
+			PropositionalFunction hasGoldOrePF = new AgentHasGoldOrePF(MinecraftDomain.ATTAGHASGOLDORE, this.mcdg.DOMAIN,
 					new String[]{MinecraftDomain.CLASSAGENT});
-			Subgoal hasGrain = new Subgoal(hasGrainPF, pfAgentHasBread);
-			result.add(hasGrain);
+			Subgoal hasGoldOre = new Subgoal(hasGoldOrePF, pfAgentHasGoldBlock);
+			result.add(hasGoldOre);
 		}
 		
 		if (worldName.contains("tunnel")) {
@@ -567,14 +567,14 @@ public class MinecraftBehavior {
 			PropositionalFunction agentYMore = new IsAgentYMore("IsAgentYMore", this.mcdg.DOMAIN,
 					new String[]{MinecraftDomain.CLASSAGENT}, 8);
 			
-			PropositionalFunction hasGrainPF = new AgentHasGrainPF(MinecraftDomain.ATTAGHASGRAIN, this.mcdg.DOMAIN,
+			PropositionalFunction hasGoldOrePF = new AgentHasGoldOrePF(MinecraftDomain.ATTAGHASGOLDORE, this.mcdg.DOMAIN,
 					new String[]{MinecraftDomain.CLASSAGENT});
 			
 			Subgoal atWall = new Subgoal(agentXMore, agentYMore);
-			Subgoal inRoom = new Subgoal(agentYMore, hasGrainPF);
-			Subgoal hasGrain = new Subgoal(hasGrainPF, pfAgentHasBread);
+			Subgoal inRoom = new Subgoal(agentYMore, hasGoldOrePF);
+			Subgoal hasGoldOre = new Subgoal(hasGoldOrePF, pfAgentHasGoldBlock);
 			
-			result.add(hasGrain);
+			result.add(hasGoldOre);
 			result.add(atWall);
 			result.add(inRoom);
 		}
@@ -719,11 +719,11 @@ public class MinecraftBehavior {
 		ArrayList<Action> isDstableWallRActions = new ArrayList<Action>();
 		isDstableWallRActions.add(this.mcdg.destR);
 		
-		ArrayList<Action> isOnGrainActions = new ArrayList<Action>();
-		isOnGrainActions.add(this.mcdg.pickUpGrain);
+		ArrayList<Action> isOnGoldOreActions = new ArrayList<Action>();
+		isOnGoldOreActions.add(this.mcdg.pickUpGoldOre);
 		
-		ArrayList<Action> isAdjOvenActions = new ArrayList<Action>();
-		isAdjOvenActions.add(this.mcdg.placeGrain);
+		ArrayList<Action> isAdjFurnaceActions = new ArrayList<Action>();
+		isAdjFurnaceActions.add(this.mcdg.placeGoldOre);
 		
 		// ----- DEFINE AFFORDANCES -----
 		Affordance affIsPlaneF = new Affordance(this.pfIsPlaneF, this.pfIsAtGoal, isPlaneFActions);
@@ -742,8 +742,8 @@ public class MinecraftBehavior {
 		Affordance affIsDstableWallL = new Affordance(this.pfIsDstableWallL, this.pfIsAtGoal, isDstableWallLActions);
 		
 		Affordance affIsAdjDoor = new Affordance(this.pfIsAdjDoor, this.pfIsAtGoal, isDoorActions);
-		Affordance affIsAdjOven = new Affordance(this.pfIsAdjOven, this.pfIsAtGoal, isAdjOvenActions);
-		Affordance affIsOnGrain = new Affordance(this.pfIsOnGrain, this.pfIsAtGoal, isOnGrainActions);
+		Affordance affIsAdjFurnace = new Affordance(this.pfIsAdjFurnace, this.pfIsAtGoal, isAdjFurnaceActions);
+		Affordance affIsOnGoldOre = new Affordance(this.pfIsOnGoldOre, this.pfIsAtGoal, isOnGoldOreActions);
 		
 		// ----- ADD AFFORDANCES -----
 		affordances.add(affIsPlaneF);
@@ -757,8 +757,8 @@ public class MinecraftBehavior {
 		affordances.add(affIsAdjTrenchL);
 		
 		affordances.add(affIsAdjDoor);
-		affordances.add(affIsAdjOven);
-		affordances.add(affIsOnGrain);
+		affordances.add(affIsAdjFurnace);
+		affordances.add(affIsOnGoldOre);
 		
 		if (worldName.contains("tunnel") || worldName.contains("epic")) {
 			affordances.add(affIsDstableWallF);
@@ -857,8 +857,8 @@ public class MinecraftBehavior {
 			ArrayList<Subgoal> subgoals = mcb.generateSubgoalKB(f.getName());
 			
 			// Change terminal functions depending on map
-			if (f.getName().contains("bread") || f.getName().contains("epic")) {
-				tf = new SinglePFTF(pfAgentHasBread); 
+			if (f.getName().contains("gold") || f.getName().contains("epic")) {
+				tf = new SinglePFTF(pfAgentHasGoldBlock); 
 			} else {
 				tf = new SinglePFTF(pfAgentAtGoal);
 			}
