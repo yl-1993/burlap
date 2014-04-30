@@ -274,10 +274,7 @@ public class MinecraftBehavior {
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 		
 		// Record the plan results to a file
-		boolean oldDetMode = this.mcdg.deterministicMode;
-		this.mcdg.deterministicMode = true;
 		EpisodeAnalysis ea = p.evaluateBehavior(initialState, rf, tf, maxSteps);
-		this.mcdg.deterministicMode = oldDetMode;
 		
 		System.out.println(ea.getActionSequenceString());
 		double totalReward = sumReward(ea.rewardSequence);
@@ -300,10 +297,7 @@ public class MinecraftBehavior {
 		 Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 		
 		// Record the plan results to a file
-		boolean oldDetMode = this.mcdg.deterministicMode;
-		this.mcdg.deterministicMode = true;
 		EpisodeAnalysis ea = p.evaluateBehavior(initialState, rf, tf, maxSteps);
-		this.mcdg.deterministicMode = oldDetMode;
 		
 		System.out.println(ea.getActionSequenceString());
 
@@ -349,10 +343,7 @@ public class MinecraftBehavior {
 
 			Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 
-			boolean oldDetMode = this.mcdg.deterministicMode;
-			this.mcdg.deterministicMode = true;
 			EpisodeAnalysis ea = p.evaluateBehavior(currState, rf, tf, maxSteps);
-			this.mcdg.deterministicMode = oldDetMode;
 			
 			// Add low level plan to overall plan and update current state to the end of that subgoal plan
 //			actionSequence += ea.getActionSequenceString() + "; ";
@@ -595,10 +586,7 @@ public class MinecraftBehavior {
 		Policy p = new GreedyQPolicy(planner);
 		
 		System.out.println("Finished Planning");
-		boolean oldDetMode = this.mcdg.deterministicMode;
-		this.mcdg.deterministicMode = true;
 		EpisodeAnalysis ea = p.evaluateAffordanceBehavior(initialState, rf, tf, kb, maxSteps);
-		this.mcdg.deterministicMode = oldDetMode;
 
 		double totalReward = sumReward(ea.rewardSequence);
 		
@@ -621,10 +609,7 @@ public class MinecraftBehavior {
 		// Create a Q-greedy policy from the planner
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 		
-		boolean oldDetMode = this.mcdg.deterministicMode;
-		this.mcdg.deterministicMode = true;
 		EpisodeAnalysis ea = p.evaluateAffordanceBehavior(initialState, rf, tf, kb, maxSteps);
-		this.mcdg.deterministicMode = oldDetMode;
 
 		double totalReward = sumReward(ea.rewardSequence);
 		
@@ -813,10 +798,10 @@ public class MinecraftBehavior {
 			statePasses += planner.planFromStateAffordance(currState, kb);
 			
 			Policy p = new GreedyQPolicy((QComputablePlanner)planner);
-			boolean oldDetMode = this.mcdg.deterministicMode;
-			this.mcdg.deterministicMode = true;
+//			boolean oldDetMode = this.mcdg.deterministicMode;
+//			this.mcdg.deterministicMode = true;
 			EpisodeAnalysis ea = p.evaluateAffordanceBehavior(currState, rf, tf, kb, maxSteps);
-			this.mcdg.deterministicMode = oldDetMode;
+//			this.mcdg.deterministicMode = oldDetMode;
 			
 			// Add low level plan to overall plan and update current state to the end of that subgoal plan
 			actionSequence += ea.getActionSequenceString() + "; ";
@@ -925,7 +910,7 @@ public class MinecraftBehavior {
 		
 		
 		// Setup Minecraft World
-		MinecraftBehavior mcb = new MinecraftBehavior("specific_test/newjumpworld.map");
+		MinecraftBehavior mcb = new MinecraftBehavior("specific_test/doorbridgeworld.map");
 		
 		tf = new MultiplePFTF(new PropositionalFunction[]{pfAgentAtGoal, pfAgentNotInWorld});
 		goalCondition = new TFGoalCondition(tf);
@@ -936,7 +921,7 @@ public class MinecraftBehavior {
 
 		// VANILLA OOMDP/VI
 		numUpdates = mcb.ValueIterationPlanner();
-		System.out.println("VI: " + numUpdates[0]);
+		System.out.println("Updates: " + numUpdates[0] + " Reward: " + numUpdates[1] + " Finished: " + numUpdates[2]);
 
 		// RTDP
 //		numUpdates = mcb.RTDPPlanner(numRollouts, maxDepth);

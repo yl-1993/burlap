@@ -1,6 +1,8 @@
 package burlap.domain.singleagent.minecraft;
 
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
+import burlap.debugtools.RandomFactory;
+import burlap.domain.singleagent.gridworld.GridWorldDomain;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.SADomain;
@@ -11,6 +13,7 @@ import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
+import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.singleagent.explorer.TerminalExplorer;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
@@ -132,10 +135,8 @@ public class MinecraftDomain implements DomainGenerator{
 	public static int[][][]							MAP;
 	public static HashMap<String,OldAffordance>		affordances;
 	public static Stack<OldAffordanceSubgoal>		goalStack;
-	private ObjectClass 							agentClass = null;
-	private ObjectClass 							goalClass = null;
 	public SADomain									DOMAIN = null;
-	public static boolean 							deterministicMode = true;
+	private double[][] transitionDynamics;
 	
 	
 	/**
@@ -187,7 +188,7 @@ public class MinecraftDomain implements DomainGenerator{
 
 		
 		// CREATE AGENT
-		agentClass = new ObjectClass(DOMAIN, CLASSAGENT);
+		ObjectClass agentClass = new ObjectClass(DOMAIN, CLASSAGENT);
 		agentClass.addAttribute(xatt);
 		agentClass.addAttribute(yatt);
 		agentClass.addAttribute(zatt);
@@ -229,12 +230,12 @@ public class MinecraftDomain implements DomainGenerator{
 		lavaClass.addAttribute(zatt);
 		
 		// ==== CREATE ACTIONS ====
-		
+		setProbSucceedTransitionDynamics(0.9);
 		// Movement
-		this.forward = new ForwardAction(ACTIONFORWARD, DOMAIN, "");
-		this.backward = new BackwardAction(ACTIONBACKWARD, DOMAIN, "");
-		this.right = new RightAction(ACTIONRIGHT, DOMAIN, "");
-		this.left = new LeftAction(ACTIONLEFT, DOMAIN, "");
+		this.forward = new MoveAction(ACTIONFORWARD, DOMAIN, this.transitionDynamics[0]);
+		this.backward = new MoveAction(ACTIONBACKWARD, DOMAIN, this.transitionDynamics[1]);
+		this.right = new MoveAction(ACTIONRIGHT, DOMAIN, this.transitionDynamics[2]);
+		this.left = new MoveAction(ACTIONLEFT, DOMAIN, this.transitionDynamics[3]);
 
 		boolean allActMode = true;
 		
@@ -242,26 +243,26 @@ public class MinecraftDomain implements DomainGenerator{
 		
 			if (placeMode) {
 				// Placement
-				this.placeF = new PlaceActionF(ACTIONPLACEF, DOMAIN, "");
-				this.placeB = new PlaceActionB(ACTIONPLACEB, DOMAIN, "");
-				this.placeL = new PlaceActionL(ACTIONPLACEL, DOMAIN, "");
-				this.placeR = new PlaceActionR(ACTIONPLACER, DOMAIN, "");
-				this.placeD = new PlaceActionD(ACTIONPLACED, DOMAIN, "");
+				this.placeF = new PlaceAction(ACTIONPLACEF, DOMAIN, new int[]{0, -1, 0});
+				this.placeB = new PlaceAction(ACTIONPLACEB, DOMAIN, new int[]{0, 1, 0});
+				this.placeR = new PlaceAction(ACTIONPLACER, DOMAIN, new int[]{1, 0, 0});
+				this.placeL = new PlaceAction(ACTIONPLACEL, DOMAIN, new int[]{-1, 0, 0});
+				this.placeD = new PlaceAction(ACTIONPLACED, DOMAIN, new int[]{0, 0, -1});
 			}
 			if (destMode) {
 				// Destruction
-				this.destF = new DestActionF(ACTIONDESTF, DOMAIN, "");
-				this.destB = new DestActionB(ACTIONDESTB, DOMAIN, "");
-				this.destR = new DestActionL(ACTIONDESTR, DOMAIN, "");
-				this.destL = new DestActionR(ACTIONDESTL, DOMAIN, "");
+				this.destF = new DestAction(ACTIONDESTF, DOMAIN, new int[]{0, -1, 0});
+				this.destB = new DestAction(ACTIONDESTB, DOMAIN, new int[]{0, 1, 0});
+				this.destR = new DestAction(ACTIONDESTR, DOMAIN, new int[]{1, 0, 0});
+				this.destL = new DestAction(ACTIONDESTL, DOMAIN, new int[]{-1, 0, 0});
 			}
 
 			
 			// Open Door
-			this.openF = new OpenActionF(ACTIONOPENF, DOMAIN, "");
-			this.openB = new OpenActionB(ACTIONOPENB, DOMAIN, "");
-			this.openR = new OpenActionL(ACTIONOPENR, DOMAIN, "");
-			this.openL = new OpenActionR(ACTIONOPENL, DOMAIN, "");
+			this.openF = new OpenAction(ACTIONOPENF, DOMAIN, new int[]{0, -1, 0});
+			this.openB = new OpenAction(ACTIONOPENB, DOMAIN, new int[]{0, 1, 0});
+			this.openR = new OpenAction(ACTIONOPENR, DOMAIN, new int[]{1, 0, 0});
+			this.openL = new OpenAction(ACTIONOPENL, DOMAIN, new int[]{-1, 0, 0});
 
 			// Pick Up Gold Ore
 			this.pickUpGoldOre = new pickUpGoldOreAction(ACTIONGOLDORE, DOMAIN, "");
@@ -274,10 +275,29 @@ public class MinecraftDomain implements DomainGenerator{
 //			this.jumpB = new JumpActionB(ACTIONJUMPB, DOMAIN, "") 
 		}
 		
-		// ==== PROPOSITIONAL FUNCTIONS ====
-		
 		return DOMAIN;
 	}
+		
+	/**
+	 * Sets the domain to use probabilistic transitions. Agent will move in the intended direction with probability probSucceed. Agent
+	 * will move in a random direction with probability 1 - probSucceed
+	 * @param probSucceed probability to move the in intended direction
+	 */
+	public void setProbSucceedTransitionDynamics(double probSucceed){
+			int na = 4;
+			double pAlt = (1.-probSucceed)/3.;
+			transitionDynamics = new double[na][na];
+			for(int i = 0; i < na; i++){
+				for(int j = 0; j < na; j++){
+					if(i != j){
+						transitionDynamics[i][j] = pAlt;
+					}
+					else{
+						transitionDynamics[i][j] = probSucceed;
+					}
+				}
+			}
+	}		
 	
 
 	public HashMap<String,OldAffordance> getAffordances() {
@@ -431,27 +451,16 @@ public class MinecraftDomain implements DomainGenerator{
 	 * @param the attempted new Y position of the agent
 	 * @param the attempted new Z position of the agent
 	 */
-	public static void move(State s, int xd, int yd, int zd){
+	public static void move(State s, int xd, int yd){
 		
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		int ax = agent.getDiscValForAttribute(ATTX);
 		int ay = agent.getDiscValForAttribute(ATTY);
 		int az = agent.getDiscValForAttribute(ATTZ);
-		
-
-		if (!deterministicMode) {
-			Random rand = new Random();
-			double threshhold = rand.nextDouble();
-			
-			if (threshhold < nondetThreshold) {
-				xd = -xd;
-				yd = -yd;
-			}
-		}
-		
+				
 		int nx = ax+xd;
 		int ny = ay+yd;
-		int nz = az+zd;
+		int nz = az;
 		
 		if (nx < 0 || nx > MAXX || ny < 0 || ny > MAXY || nz < 0 || nz > MAXZ) {
 			// Trying to move out of bounds, return.
@@ -474,10 +483,6 @@ public class MinecraftDomain implements DomainGenerator{
 			}
 		}
 		
-//		if (nz - 1 > -1 && getBlockAt(s, nx, ny, nz - 1) == null && !isInstanceOfAt(s, nx, ny, nz - 1, CLASSLAVA)) {
-//			// There is no block under us, return.
-//			return;
-//		}
 		if (getBlockAt(s, nx, ny, nz) != null) {
 			// There is a block where we are trying to move, return.
 			return;
@@ -491,6 +496,39 @@ public class MinecraftDomain implements DomainGenerator{
 
 	}
 	
+	/**
+	 * Returns the change in x and y position for a given direction number.
+	 * @param i the direction number (0,1,2,3 indicates north,south,east,west, respectively)
+	 * @return the change in direction for x and y; the first index of the returned double is change in x, the second index is change in y.
+	 */
+	static protected int [] movementDirectionFromIndex(int i){
+		
+		int [] result = null;
+		
+		switch (i) {
+		case 0:
+			result = new int[]{0,-1};
+			break;
+			
+		case 1:
+			result = new int[]{0,1};
+			break;
+			
+		case 2:
+			result = new int[]{1,0};
+			break;
+			
+		case 3:
+			result = new int[]{-1,0};
+
+		default:
+			break;
+		}
+		
+		return result;
+	}
+	
+	
 	// After each action execution, handle falling logic
 	public static void fall(State s) {
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
@@ -498,9 +536,10 @@ public class MinecraftDomain implements DomainGenerator{
 		int ay = agent.getDiscValForAttribute(ATTY);
 		int az = agent.getDiscValForAttribute(ATTZ);
 		
-		if (getCellContents(s, ax, ay, az - 1) != 1) {
+		while (getCellContents(s, ax, ay, az - 1) != 1) {
 			// No block below agent -- fall
-			agent.setValue(ATTZ, az - 1);
+			az--;
+			agent.setValue(ATTZ, az);
 		}
 	}
 	
@@ -540,17 +579,6 @@ public class MinecraftDomain implements DomainGenerator{
 		int ax = agent.getDiscValForAttribute(ATTX);
 		int ay = agent.getDiscValForAttribute(ATTY);
 		int az = agent.getDiscValForAttribute(ATTZ);
-		
-		// For now, block placement down is deterministic
-		if (!deterministicMode && dz == 0) {
-			Random rand = new Random();
-			double threshhold = rand.nextDouble();
-			
-			if (threshhold < nondetThreshold) {
-				dz = -dz;
-				dy = -dy;
-			}
-		}
 		
 
 		// Get global coordinates of the loc to place the block
@@ -616,18 +644,7 @@ public class MinecraftDomain implements DomainGenerator{
 	}
 
 	public static void destroy(State s, int dx, int dy, int dz) {
-		
-		// If non-deterministic mode, there's a chance we act incorrectly.
-		if (!deterministicMode) {
-			Random rand = new Random();
-			double threshhold = rand.nextDouble();
-			
-			if (threshhold < nondetThreshold) {
-				dx = -dx;
-				dy = -dy;
-			}
-		}
-		
+				
 		ObjectInstance agent = s.getObjectsOfTrueClass(CLASSAGENT).get(0);
 		
 		// Agent's global coordinates
@@ -758,59 +775,125 @@ public class MinecraftDomain implements DomainGenerator{
 		
 	}
 	
-	public static class ForwardAction extends Action{
+	public static class MoveAction extends Action {
+		private double[] directionProbs;
+		private Random rand;
 
-		public ForwardAction(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
+		public MoveAction(String name, Domain domain, double [] directions){
+			super(name, domain, "");
+			this.directionProbs = directions;
+			this.rand = RandomFactory.getMapped(0);
 		}
 		
 		protected State performActionHelper(State st, String[] params) {
-			move(st, 0, -1, 0);
+			
+			double roll = rand.nextDouble();
+			double curSum = 0.;
+			int dir = 0;
+			for(int i = 0; i < directionProbs.length; i++){
+				curSum += directionProbs[i];
+				if(roll < curSum){
+					dir = i;
+					break;
+				}
+			}
+			
+			int [] dcomps = movementDirectionFromIndex(dir);
+			move(st, dcomps[0], dcomps[1]);
 			fall(st);
-//			System.out.println("Action Performed: " + this.name);
+			
 			return st;
 		}
 		
-	}
-	public static class BackwardAction extends Action{
-
-		public BackwardAction(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
+		public List<TransitionProbability> getTransitions(State st, String [] params){
+			
+			List <TransitionProbability> transitions = new ArrayList<TransitionProbability>();
+			for(int i = 0; i < directionProbs.length; i++){
+				double p = directionProbs[i];
+				if(p == 0.){
+					continue; //cannot transition in this direction
+				}
+				State ns = st.copy();
+				int [] dcomps = movementDirectionFromIndex(i);
+				move(ns, dcomps[0], dcomps[1]);
+				fall(ns);
+				
+				//make sure this direction doesn't actually stay in the same place and replicate another no-op
+				boolean isNew = true;
+				for(TransitionProbability tp : transitions){
+					if(tp.s.equals(ns)){
+						isNew = false;
+						tp.p += p;
+						break;
+					}
+				}
+				
+				if(isNew){
+					TransitionProbability tp = new TransitionProbability(ns, p);
+					transitions.add(tp);
+				}
+			
+				
+			}
+			
+			
+			return transitions;
 		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			move(st, 0, 1, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}		
 	}
-	public static class RightAction extends Action{
-
-		public RightAction(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			move(st, 1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}
-	}
-	public static class LeftAction extends Action{
-
-		public LeftAction(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			move(st, -1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
+	
+//	public static class ForwardAction extends Action{
+//
+//		public ForwardAction(String name, Domain domain, String parameterClasses){
+//			super(name, domain, parameterClasses);
+//		}
+//		
+//		protected State performActionHelper(State st, String[] params) {
+//			move(st, 0, -1);
+//			fall(st);
+////			System.out.println("Action Performed: " + this.name);
+//			return st;
+//		}
+//		
+//	}
+//	public static class BackwardAction extends Action{
+//
+//		public BackwardAction(String name, Domain domain, String parameterClasses){
+//			super(name, domain, parameterClasses);
+//		}
+//		
+//		protected State performActionHelper(State st, String[] params) {
+//			move(st, 0, 1);
+//			fall(st);
+////			System.out.println("Action Performed: " + this.name);
+//			return st;
+//		}		
+//	}
+//	public static class RightAction extends Action{
+//
+//		public RightAction(String name, Domain domain, String parameterClasses){
+//			super(name, domain, parameterClasses);
+//		}
+//		
+//		protected State performActionHelper(State st, String[] params) {
+//			move(st, 1, 0);
+//			fall(st);
+////			System.out.println("Action Performed: " + this.name);
+//			return st;
+//		}
+//	}
+//	public static class LeftAction extends Action{
+//
+//		public LeftAction(String name, Domain domain, String parameterClasses){
+//			super(name, domain, parameterClasses);
+//		}
+//		
+//		protected State performActionHelper(State st, String[] params) {
+//			move(st, -1, 0);
+//			fall(st);
+////			System.out.println("Action Performed: " + this.name);
+//			return st;
+//		}	
+//	}
 	
 	public static class JumpAction extends Action{
 
@@ -827,185 +910,56 @@ public class MinecraftDomain implements DomainGenerator{
 	}
 		
 		
-	public class PlaceActionF extends Action{
+	public class PlaceAction extends Action{
 
-		public PlaceActionF(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
+		private int[] dir;
+
+		public PlaceAction(String name, Domain domain, int[] dir){
+			super(name, domain, "");
+			this.dir = dir;
 		}
 		
 		protected State performActionHelper(State st, String[] params) {
-			place(st, 0, -1, 0);
+			place(st, this.dir[0], this.dir[1], this.dir[2]);
 			fall(st);
 //			System.out.println("Action Performed: " + this.name);
 			return st;
 		}
 	}
-	
-	public class PlaceActionB extends Action{
 
-		public PlaceActionB(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
+	
+	public static class DestAction extends Action{
+
+		private int[] dir;
+
+		public DestAction(String name, Domain domain, int[] dir){
+			super(name, domain, "");
+			this.dir = dir;
 		}
 		
 		protected State performActionHelper(State st, String[] params) {
-			place(st, 0, 1, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public class PlaceActionL extends Action{
-
-		public PlaceActionL(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			place(st, -1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public class PlaceActionR extends Action{
-
-	public PlaceActionR(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			place(st, 1, 0, 0);
-			fall(st);
-			return st;
-		}	
-	}
-	
-	public class PlaceActionD extends Action{
-
-		public PlaceActionD(String name, Domain domain, String parameterClasses){
-				super(name, domain, parameterClasses);
-			}
-			
-			protected State performActionHelper(State st, String[] params) {
-				place(st, 0, 0, -1);
-				fall(st);
-				return st;
-			}	
-		}
-	
-	
-	public static class DestActionF extends Action{
-
-		public DestActionF(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			destroy(st, 0, -1, 0);
+			destroy(st, this.dir[0], this.dir[1], this.dir[2]);
 			fall(st);
 //			System.out.println("Action Performed: " + this.name);
 			return st;
 		}
 	}
-	
-	public static class DestActionB extends Action{
 
-		public DestActionB(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			destroy(st, 0, 1, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public static class DestActionR extends Action{
+	public static class OpenAction extends Action{
 
-		public DestActionR(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			destroy(st, -1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public static class DestActionL extends Action{
+		private int[] dir;
 
-		public DestActionL(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			destroy(st, 1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public static class OpenActionF extends Action{
-
-		public OpenActionF(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
+		public OpenAction(String name, Domain domain, int[] dir){
+			super(name, domain, "");
+			this.dir = dir;
 		}
 		
 		protected State performActionHelper(State st, String[] params) {
 			fall(st);
-			open(st, 0, -1, 0);
+			open(st, this.dir[0], this.dir[1], this.dir[2]);
 //			System.out.println("Action Performed: " + this.name);
 			return st;
 		}
-	}
-	
-	public static class OpenActionB extends Action{
-
-		public OpenActionB(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			open(st, 0, 1, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public static class OpenActionR extends Action{
-
-		public OpenActionR(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			open(st, -1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
-	}
-	
-	public static class OpenActionL extends Action{
-
-		public OpenActionL(String name, Domain domain, String parameterClasses){
-			super(name, domain, parameterClasses);
-		}
-		
-		protected State performActionHelper(State st, String[] params) {
-			open(st, 1, 0, 0);
-			fall(st);
-//			System.out.println("Action Performed: " + this.name);
-			return st;
-		}	
 	}
 	
 	public static class pickUpGoldOreAction extends Action{
@@ -1142,12 +1096,10 @@ public class MinecraftDomain implements DomainGenerator{
 	
 	public static class IsAgentYAt extends PropositionalFunction {
 		private int destY;
-		private int blockNum;
 
 		public IsAgentYAt(String name, Domain domain, String[] parameterClasses, int destY, int blockNum) {
 			super(name, domain, parameterClasses);
 			this.destY = destY;
-			this.blockNum = blockNum;  // This is a quick hack to get the agent to a Y location with the correct number of blocks.
 		}
 		
 		public boolean isTrue(State st) {
@@ -1155,7 +1107,6 @@ public class MinecraftDomain implements DomainGenerator{
 			
 			// Get the agent's current coordinates
 			int ay = agent.getDiscValForAttribute(ATTY);
-			int agentBlockNum = agent.getDiscValForAttribute(ATTBLKNUM);
 			return (ay == this.destY);
 		}
 
@@ -1265,29 +1216,6 @@ public class MinecraftDomain implements DomainGenerator{
 			return isTrue(st);
 		}
 		
-		// Returns the x,y,z delta(s) needed to satisfy the atGoalPF
-		public int[] delta(State st, String[] params) {
-			
-			ObjectInstance agent = st.getObject(CLASSAGENT + "0");
-			
-			//get the agent coordinates
-			int ax = agent.getDiscValForAttribute(ATTX);
-			int ay = agent.getDiscValForAttribute(ATTY);
-			int az = agent.getDiscValForAttribute(ATTZ);
-			
-			ObjectInstance goal = st.getObject(CLASSGOAL + "0");
-			
-			int nx = Integer.parseInt(params[0]);
-			int ny = Integer.parseInt(params[1]);
-			int nz = Integer.parseInt(params[2]);
-			
-			int[] dist = new int[3];
-			dist[0] = nx - ax;
-			dist[1] = ny - ay;
-			dist[2] = nz - az;
-			
-			return dist;
-		}
 		
 	}
 	
@@ -1485,6 +1413,12 @@ public class MinecraftDomain implements DomainGenerator{
 		}
 		
 	}
+	
+	/**
+	 * TODO: Consolidate all IsAdj____ 
+	 * @author dabel
+	 *
+	 */
 	
 	public static class IsAdjPlane extends PropositionalFunction {
 

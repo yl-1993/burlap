@@ -310,6 +310,7 @@ public class MCStateGenerator {
 				break;
 			case doorSym:
 				addDoor(s, d, ncol, nrow, 2);
+				addBlock(s, d, ncol, nrow, 3); // Add a block above doors so agent can't jump over
 				ncol++;
 				break;
 			case goldOreSym:
@@ -392,7 +393,6 @@ public class MCStateGenerator {
 
 	private static void addGoal(State s, Domain d, int x, int y, int z) {
 		ObjectInstance goal = new ObjectInstance(d.getObjectClass("goal"), "goal0");
-		addBlock(s, d, x, y, z - 1); // Goal needs to be on top of a block
 		addObject(goal, s, d, x, y, z);
 	}
 	
