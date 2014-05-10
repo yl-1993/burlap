@@ -935,8 +935,8 @@ public class MinecraftBehavior {
 		int maxDepth = 250;
 
 		// VANILLA OOMDP/VI
-		numUpdates = mcb.ValueIterationPlanner();
-		System.out.println("VI: " + numUpdates[0]);
+		numUpdates = mcb.RTDPPlanner(numRollouts, maxDepth);
+		System.out.println("RTDP: " + numUpdates[0]);
 
 		// RTDP
 //		numUpdates = mcb.RTDPPlanner(numRollouts, maxDepth);
