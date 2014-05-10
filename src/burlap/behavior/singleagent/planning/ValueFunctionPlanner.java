@@ -15,6 +15,7 @@ import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
 import burlap.domain.singleagent.minecraft.Affordance;
 import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.core.TransitionProbability;
@@ -226,17 +227,24 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 			return st.getMemoizedGroundedActions();
 		}
 		
-		
+		int n = 0;
 		ArrayList<GroundedAction> res = new ArrayList<GroundedAction>();
+		List<GroundedAction> tmp = new ArrayList<GroundedAction>();
 		for(Affordance aff : kb) {
 			// TODO: Second argument should reflect CURRENT goal, not AtGoal
-			res.addAll(aff.getApplicableActions(st, domain.getPropFunction("AtGoal")));  
+			tmp = aff.getApplicableActions(st, domain.getPropFunction("AtGoal"));
+			n += tmp.size();
+			res.addAll(tmp);  
 		}
 		
 		// Backing off inside this method. Normal actions are added if we can't find any
 		// for the entire knowledge base.
 		if (res.size() == 0) {
-			System.out.println("REACHABILITY: BACKING OFF TO VI ACTIONS");
+			ObjectInstance agent = st.getObject("agent0");
+			int ax = agent.getDiscValForAttribute("x");
+			int ay = agent.getDiscValForAttribute("y");
+			int az = agent.getDiscValForAttribute("z");
+			System.out.println("Backing off to full action set, agent loc: " + ax + "," + ay + "," + az);
 			for(Action a : actions){
 				res.addAll(st.getAllGroundedActionsFor(a));
 			}
@@ -611,7 +619,13 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	protected double computeQ(State s, ActionTransitions trans){
 		
 		double q = 0.;
-
+		if (trans == null) {
+			ObjectInstance agent = s.getObject("agent0");
+			int ax = agent.getDiscValForAttribute("x");
+			int ay = agent.getDiscValForAttribute("y");
+			int az = agent.getDiscValForAttribute("z");
+			int x = 0;
+		}
 		if(trans.ga.action instanceof Option){
 			
 			Option o = (Option)trans.ga.action;

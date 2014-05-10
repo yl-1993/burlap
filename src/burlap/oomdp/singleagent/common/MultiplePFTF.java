@@ -18,6 +18,7 @@ public class MultiplePFTF implements TerminalFunction {
 
 	boolean							terminateOnTrue;
 	private PropositionalFunction[] pfs;
+	private PropositionalFunction goal;
 	
 	
 	/**
@@ -29,8 +30,13 @@ public class MultiplePFTF implements TerminalFunction {
 		this.pfs = pfs;
 		terminateOnTrue = true;
 	}
-	
-	
+
+	public MultiplePFTF(PropositionalFunction[] pfs, PropositionalFunction goal){
+		this.pfs = pfs;
+		this.goal = goal;
+		terminateOnTrue = true;
+	}
+		
 	/**
 	 * Initializes the propositional function that will cause the state to be terminal when any Grounded version of
 	 * pf is true or alternatively false.
@@ -40,6 +46,14 @@ public class MultiplePFTF implements TerminalFunction {
 	public MultiplePFTF(PropositionalFunction[] pfs, boolean terminateOnTrue){
 		this.pfs = pfs;
 		this.terminateOnTrue = terminateOnTrue;
+	}
+	
+	/**
+	 * Accessor method for the current goal
+	 * @return
+	 */
+	public PropositionalFunction getGoalPF() {
+		return this.goal;
 	}
 	
 	

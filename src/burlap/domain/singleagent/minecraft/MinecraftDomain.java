@@ -67,7 +67,7 @@ public class MinecraftDomain implements DomainGenerator{
 //	public static final String					ACTIONJUMPR = "jumpR";
 //	public static final String					ACTIONJUMPL = "jumpL";
 
-	public static final String					ACTIONPLACEGOLDORE = "PlaceGoldOre";
+	public static final String					ACTIONPLACEGOLDORE = "placeGoldOre";
 
 	// ----- ACTIONS -----
 	public Action								forward;
@@ -121,12 +121,10 @@ public class MinecraftDomain implements DomainGenerator{
 	public static final String					CLASSDOOR = "door";
 	public static final String					CLASSFURNACE = "furnace";
 	public static final String					CLASSLAVA = "lava";
-	public static int							MAXX = 14; // 0 - 9, gives us a 10x10 surface
-	public static int							MAXY = 14;
-	public static final int						MAXZ = 8;
+	public static int							MAXX; // 0 - 9, gives us a 10x10 surface
+	public static int							MAXY;
+	public static final int						MAXZ = 10;
 	public static final int						MAXBLKNUM = 4;
-	
-	public static final double					nondetThreshold = 0.1;
 
 
 	
@@ -135,9 +133,11 @@ public class MinecraftDomain implements DomainGenerator{
 	public static int[][][]							MAP;
 	public static HashMap<String,OldAffordance>		affordances;
 	public static Stack<OldAffordanceSubgoal>		goalStack;
-	public SADomain									DOMAIN = null;
 	private double[][] transitionDynamics;
+	private double 									probOfSuccess = 1.0;  // Probability of success for non-det actions
 	
+	private SADomain									DOMAIN = null;
+	private List<Action>								allActions;
 	
 	/**
 	 * Constructs an empty map with deterministic transitions
@@ -146,10 +146,11 @@ public class MinecraftDomain implements DomainGenerator{
 	 * 
 	 * NOTE: Refactor this at some point so it is a constructor.
 	 */
-	public Domain generateDomain(int rows, int cols, boolean placeMode, boolean destMode) {
-		MAXX = rows;
-		MAXY = cols;
+	public Domain generateDomain(boolean placeMode, boolean destMode) {
 		
+		// REMOVE LATER
+		destMode = false;
+
 		if(DOMAIN != null){
 			return DOMAIN;
 		}
@@ -158,10 +159,10 @@ public class MinecraftDomain implements DomainGenerator{
 		
 		// ==== CREATE ATTRIBUTES ====
 		Attribute xatt = new Attribute(DOMAIN, ATTX, Attribute.AttributeType.DISC);
-		xatt.setDiscValuesForRange(0, MAXX, 1);
+		xatt.setDiscValuesForRange(0, 4, 1);
 		
 		Attribute yatt = new Attribute(DOMAIN, ATTY, Attribute.AttributeType.DISC);
-		yatt.setDiscValuesForRange(0, MAXY, 1);
+		yatt.setDiscValuesForRange(0, 4, 1);
 
 		Attribute zatt = new Attribute(DOMAIN, ATTZ, Attribute.AttributeType.DISC);
 		zatt.setDiscValuesForRange(0, MAXZ, 1);
@@ -230,16 +231,22 @@ public class MinecraftDomain implements DomainGenerator{
 		lavaClass.addAttribute(zatt);
 		
 		// ==== CREATE ACTIONS ====
-		setProbSucceedTransitionDynamics(0.9);
+		setProbSucceedTransitionDynamics(probOfSuccess);
 		// Movement
 		this.forward = new MoveAction(ACTIONFORWARD, DOMAIN, this.transitionDynamics[0]);
 		this.backward = new MoveAction(ACTIONBACKWARD, DOMAIN, this.transitionDynamics[1]);
 		this.right = new MoveAction(ACTIONRIGHT, DOMAIN, this.transitionDynamics[2]);
 		this.left = new MoveAction(ACTIONLEFT, DOMAIN, this.transitionDynamics[3]);
 
+		allActions = new ArrayList<Action>();
+		allActions.add(this.forward);
+		allActions.add(this.backward);
+		allActions.add(this.left);
+		allActions.add(this.right);
+		
 		boolean allActMode = true;
 		
-		if (allActMode) {
+		if (true) {
 		
 			if (placeMode) {
 				// Placement
@@ -248,6 +255,12 @@ public class MinecraftDomain implements DomainGenerator{
 				this.placeR = new PlaceAction(ACTIONPLACER, DOMAIN, new int[]{1, 0, 0});
 				this.placeL = new PlaceAction(ACTIONPLACEL, DOMAIN, new int[]{-1, 0, 0});
 				this.placeD = new PlaceAction(ACTIONPLACED, DOMAIN, new int[]{0, 0, -1});
+				
+				allActions.add(this.placeF);
+				allActions.add(this.placeB);
+				allActions.add(this.placeR);
+				allActions.add(this.placeL);
+				allActions.add(this.placeD);
 			}
 			if (destMode) {
 				// Destruction
@@ -255,6 +268,11 @@ public class MinecraftDomain implements DomainGenerator{
 				this.destB = new DestAction(ACTIONDESTB, DOMAIN, new int[]{0, 1, 0});
 				this.destR = new DestAction(ACTIONDESTR, DOMAIN, new int[]{1, 0, 0});
 				this.destL = new DestAction(ACTIONDESTL, DOMAIN, new int[]{-1, 0, 0});
+				
+				allActions.add(this.destF);
+				allActions.add(this.destB);
+				allActions.add(this.destR);
+				allActions.add(this.destL);
 			}
 
 			
@@ -272,10 +290,21 @@ public class MinecraftDomain implements DomainGenerator{
 
 			// Jump
 			this.jump = new JumpAction(ACTIONJUMP, DOMAIN, "");
-//			this.jumpB = new JumpActionB(ACTIONJUMPB, DOMAIN, "") 
+			
+			allActions.add(this.openF);
+			allActions.add(this.openB);
+			allActions.add(this.openR);
+			allActions.add(this.openL);
+			allActions.add(this.pickUpGoldOre);
+			allActions.add(this.placeGoldOre);
+			allActions.add(this.jump);
 		}
 		
 		return DOMAIN;
+	}
+	
+	public List<Action> getActions() {
+		return this.allActions;
 	}
 		
 	/**
@@ -358,7 +387,10 @@ public class MinecraftDomain implements DomainGenerator{
 	}
 	
 	public static int getCellContents(State st, int x, int y, int z){
-		
+		ObjectInstance agent = st.getObjectsOfTrueClass(CLASSAGENT).get(0);
+		int ax = agent.getDiscValForAttribute(ATTX);
+		int ay = agent.getDiscValForAttribute(ATTY);
+		int az = agent.getDiscValForAttribute(ATTZ);
 		if (x < 0 || x > MAXX || y < 0 || y > MAXY || z < 0 || z > MAXZ) {
 			// Beyond the edge of the universe
 			return -1;
@@ -606,7 +638,7 @@ public class MinecraftDomain implements DomainGenerator{
 			
 		}
 		// Now try placing one on agent's z level if it couldn't place one at z - 1
-		else if (isPlaceable(s, bz, by, bz) && numAgentsBlocks > 0){
+		else if (isPlaceable(s, bx, by, bz) && numAgentsBlocks > 0){
 			
 			// Place block
 			addBlock(s, bx, by, bz);
@@ -1502,12 +1534,14 @@ public class MinecraftDomain implements DomainGenerator{
 			int ay = agent.getDiscValForAttribute(ATTY);
 			int az = agent.getDiscValForAttribute(ATTZ);
 
-			if (this.dirFlag && getCellContents(st, ax + this.dx * this.dist, ay + this.dy * this.dist, az - 1) == 0) {
+			if (this.dirFlag && getCellContents(st, ax + this.dx * this.dist, ay + this.dy * this.dist, az - 1) == 0
+					&& getCellContents(st, ax, ay, az - 1) == 1) {
+				// Agent is not in the air and there is nothing where it is looking
 				return true;
 			}
-			else if (!this.dirFlag && isAdjTrench(st, ax, ay, az)) {
-				return true;
-			}
+//			else if (!this.dirFlag && isAdjTrench(st, ax, ay, az)) {
+//				return true;
+//			}
 			else {
 				return false;
 			}

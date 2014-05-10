@@ -52,11 +52,8 @@ public class ValueIteration extends ValueFunctionPlanner{
 
 	@Override
 	public int planFromState(State initialState, MinecraftDomain mcDomain){
-		boolean oldDetFlag = mcDomain.deterministicMode;
-		mcDomain.deterministicMode = true;
 		this.initializeOptionsForExpectationComputations();
 		if(this.performReachabilityFrom(initialState)){
-			mcDomain.deterministicMode = oldDetFlag;
 			return this.runVI();
 		}
 		return -1;
@@ -80,11 +77,8 @@ public class ValueIteration extends ValueFunctionPlanner{
 	}
 	
 	public int planFromStateAffordance(State initialState, ArrayList<Affordance> kb, MinecraftDomain mcDomain){
-		boolean oldDetFlag = mcDomain.deterministicMode;
-		mcDomain.deterministicMode = true;
 		this.initializeOptionsForExpectationComputations();
 		if(this.performAffordanceReachabilityFrom(initialState, kb)){
-			mcDomain.deterministicMode = oldDetFlag;
 			return this.runVI();
 		}
 		return -1;
@@ -161,15 +155,15 @@ public class ValueIteration extends ValueFunctionPlanner{
 		openList.offer(sih);
 		openedSet.add(sih);
 		
-		
+		int i = 0;
 		while(openList.size() > 0){
+			i++;
 			StateHashTuple sh = openList.poll();
 			
 			//skip this if it's already been expanded
 			if(transitionDynamics.containsKey(sh)){
 				continue;
 			}
-			
 			mapToStateIndex.put(sh, sh);
 			
 			//do not need to expand from terminal states
@@ -191,6 +185,7 @@ public class ValueIteration extends ValueFunctionPlanner{
 				ActionTransitions at = new ActionTransitions(sh.s, ga, hashingFactory);
 				transitions.add(at);
 				for(HashedTransitionProbability tp : at.transitions){
+
 					StateHashTuple tsh = tp.sh;
 					if(!openedSet.contains(tsh) && !transitionDynamics.containsKey(tsh)){
 						openedSet.add(tsh);
@@ -198,7 +193,6 @@ public class ValueIteration extends ValueFunctionPlanner{
 					}
 				}
 			}
-			
 			//now make entry for this in the transition dynamics
 			transitionDynamics.put(sh, transitions);
 			
@@ -206,7 +200,7 @@ public class ValueIteration extends ValueFunctionPlanner{
 		}
 		
 		DPrint.cl(11, "Finished reachability analysis; # states: " + mapToStateIndex.size());
-		
+
 		
 		return true;
 		
