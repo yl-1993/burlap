@@ -30,6 +30,14 @@ public class SinglePFTF implements TerminalFunction {
 		terminateOnTrue = true;
 	}
 	
+	/**
+	 * Accessor method for the current goal
+	 * @return
+	 */
+	public PropositionalFunction getGoalPF() {
+		return this.pf;
+	}
+	
 	
 	/**
 	 * Initializes the propositional function that will cause the state to be terminal when any Grounded version of

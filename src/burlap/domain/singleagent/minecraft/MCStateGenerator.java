@@ -36,62 +36,25 @@ public class MCStateGenerator {
 	private static final char bAddSym = '+';
 	private static final char aSym = 'a';
 	private static final char bRmSym = '-';
+	private static final char bRmAllSym = '/';
 	private static final char dummySym = '.';
 	private static final char wallSym = '=';
 	private static final char doorSym = 'd';
-	private static final char grainSym = '*';
-	private static final char ovenSym = 'o';
+	private static final char goldOreSym = '*';
+	private static final char furnaceSym = 'o';
 	private static final char lavaSym = 'V';
 	private static final char twoBlockSym = '^';
 	private int numRows;
 	private int numCols;
 	private int numBlocks;
 	private int nTrenches = 0; // For use in random map generation
+	private double probOfTrench = 0.5;
+
+	// The height of the destructable block layers placed above the "world's end" (indestructable block layer)
+	private int floorHeight = 1;  
 	
 	
 	public MCStateGenerator() {
-		// TODO Auto-generated constructor stub
-		// Convert relative path to absolute.
-		String root = System.getProperty("user.dir");
-		String abspath = root + "/maps/random/";
-		
-		// Generate a map based on the given LGD
-		
-		String[] map = generateRandomMap();
-
-		Random r = new Random();
-		try {
-			abspath += r.nextInt(1000) + ".map";
-			File f = new File(abspath);
-			if (!f.exists()) {
-				f.createNewFile();
-				System.out.println("Created file");
-			} else {
-				System.out.println("File exists");
-			}
-			BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
-			
-			bw.write("BN=" + nTrenches + "\n");
-			for(int i = 0;i < map.length; i++) {
-				for(int j = 0; j < map[i].length() - 1; j++) {
-					bw.write(map[i].charAt(j) + " ");
-				}
-				bw.write(map[i].charAt(map[i].length() - 1) + "\n");
-				bw.flush();
-			}
-			bw.close();
-			
-		}
-		catch(IOException ex) {
-			System.out.println("Inside catch");
-			ex.printStackTrace();
-			return;
-		}
-
-		// Write map to file, ProcessHeader()
-		this.fpath = abspath;
-		processHeader();
-		
 	}
 	
 	/**
@@ -106,25 +69,78 @@ public class MCStateGenerator {
 		processHeader();
 	}
 	
-	public String[] generateRandomMap() {
+
+	
+	public String makeLearningMap(PropositionalFunction lgd, int mapNum) {
+		// Convert relative path to absolute.
+		String lgdString = lgd.getName();
+		String mappath = "learning/" + lgdString;
+		String root = System.getProperty("user.dir");
+		String abspath = root + "/maps/" + mappath;
+		
+		// Create necessary directories
+		File folder = new File(abspath);
+		folder.mkdirs();
+		
+		// Generate a map based on the given LGD
+		
+		String[] map = generateRandomASCIIMap();
+		Random r = new Random();
+		floorHeight = 4;
+
+		try {
+			String mapname = mapNum  + ".map";
+			abspath += "/" + mapname;
+			mappath += "/" + mapname;
+			File f = new File(folder, mapname);
+			if (!f.exists()) {
+				f.createNewFile();
+			}
+			BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
+			
+			bw.write("BN=" + nTrenches + ",FLR=" + floorHeight + "\n");
+			for(int i = 0;i < map.length; i++) {
+				for(int j = 0; j < map[i].length() - 1; j++) {
+					bw.write(map[i].charAt(j) + " ");
+				}
+				bw.write(map[i].charAt(map[i].length() - 1) + "\n");
+				bw.flush();
+			}
+			bw.close();
+			
+		}
+		catch(IOException ex) {
+			System.out.println("Inside catch: " + abspath);
+			ex.printStackTrace();
+			return null;
+		}
+
+		// Write map to file, ProcessHeader()
+		this.fpath = abspath;
+		processHeader();
+		
+		return mappath; // returns the string AFTER /maps/ needed to access this map
+	}
+	
+	public String[] generateRandomASCIIMap() {
 		
 		// Pick dimensions
 		Random r = new Random();
-		int n = r.nextInt(3) + 4;  // Generates a random number between 4 and 6
-		
+//		int n = r.nextInt(3) + 4;  // Generates a random number between 4 and 6
+		int n = 3; // 4x4 random worlds
 		String[] map = generateEmptyGrid(n);
 		
 		String trench = "";
 		for (int i = 0; i < n; i++) {
-			trench += bRmSym;
+			trench += bRmAllSym;
 		}
 		
 
 		int maxTrenches = n / 2;
-		double probOfTrench = 0.2;
-		for (int i = 0; i < n; i++){
+		nTrenches = 0;
+		for (int i = n/2; i <= n/2; i++){
 			// Flip a weighted coin for adding a trench or not
-			if (r.nextDouble() < probOfTrench && nTrenches <= maxTrenches) {
+			if (r.nextDouble() < probOfTrench && nTrenches < maxTrenches) {
 				nTrenches++;
 				// Flip a coin for orientation
 				if (r.nextBoolean()) {
@@ -134,7 +150,7 @@ public class MCStateGenerator {
 				else {
 					// Vertical
 					for (int j = 0; j < n; j++) {
-						map[j] = map[j].substring(0, i) + bRmSym + map[j].substring(i + 1);
+						map[j] = map[j].substring(0, i) + bRmAllSym + map[j].substring(i + 1);
 					}
 				}
 			}
@@ -183,6 +199,7 @@ public class MCStateGenerator {
 		}
 		
 	}
+	
 	public int[] getDimensions() {
 		try {
 			Scanner scnr = new Scanner(new File(this.fpath));
@@ -214,6 +231,8 @@ public class MCStateGenerator {
 				// ADD HEADER INFONS HERE
 				if (item[0].equals("BN")) {
 					numBlocks = Integer.parseInt(item[1]);
+				} else if (item[0].equals("FLR")) {
+					floorHeight = Integer.parseInt(item[1]);
 				}
 			}
 		}catch(IOException e) {
@@ -247,12 +266,11 @@ public class MCStateGenerator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		this.numRows = nrow;
 		return s;
 				
 	}
 	
-
 
 	/**
 	 * Here we read each ascii character in the row and make adjustments to the
@@ -271,63 +289,69 @@ public class MCStateGenerator {
 		int ncol = 0;
 		row = row.replace(" ", "");
 		
-		
 		while (ncol < row.length()) {
 
 			ch = row.charAt(ncol);
-			
-			if (ch != ' ' && ch != '*') {
-				// Floor placement
-				addIndBlock(s, d, ncol, nrow, 0);
-				addBlock(s, d, ncol, nrow, 1);
+						
+			// Floor placement
+			addIndBlock(s, d, ncol, nrow, 0);  // This is the bottom of our world
+			for (int i = 1; i <= floorHeight; i++) {
+				addBlock(s, d, ncol, nrow, i);	
 			}
-			
+				
 			switch (ch) {
 			case twoBlockSym:
-				addBlock(s, d, ncol, nrow, 3);
+				addBlock(s, d, ncol, nrow, floorHeight + 2);
 			case bAddSym:
-				addBlock(s, d, ncol, nrow, 2);
+				addBlock(s, d, ncol, nrow, floorHeight + 1);
 				ncol++;
 				break;
 			case aSym:
-				addAgent(s, d, ncol, nrow, 2, numBlocks);
+				addAgent(s, d, ncol, nrow, floorHeight + 1, numBlocks);
 				ncol++;
 				break;
 			case gSym:
-				addGoal(s, d, ncol, nrow, 2);
+				addGoal(s, d, ncol, nrow, floorHeight + 1);
 				ncol++;
 				break;
 			case bRmSym:
-				removeBlock(s, d, ncol, nrow, 1);
+				removeBlock(s, d, ncol, nrow, floorHeight);
+				ncol++;
+				break;
+			case bRmAllSym:
+				for (int i = 1; i <= floorHeight; i++) {
+					removeBlock(s, d, ncol, nrow, i);
+				}
 				ncol++;
 				break;
 			case dummySym:
 				ncol++;
 				break;
 			case wallSym:
-				addIndBlock(s, d, ncol, nrow, 2);
+				addIndBlock(s, d, ncol, nrow, floorHeight + 1);
 				ncol++;
 				break;
 			case doorSym:
-				addDoor(s, d, ncol, nrow, 2);
+				addDoor(s, d, ncol, nrow, floorHeight + 1);
+				addBlock(s, d, ncol, nrow, floorHeight + 2); // Add a block above doors so agent can't jump over
 				ncol++;
 				break;
-			case grainSym:
-				addIndBlock(s, d, ncol, nrow, 0);
-				addGrain(s, d, ncol, nrow, 1);
+			case goldOreSym:
+				addGoldOre(s, d, ncol, nrow, floorHeight);
 				ncol++;
 				break;
-			case ovenSym:
-				addOven(s, d, ncol, nrow, 2);
+			case furnaceSym:
+				addFurnace(s, d, ncol, nrow, floorHeight + 1);
 				ncol++;
 				break;
 			case lavaSym:
-				addLava(s, d, ncol, nrow, 1);
+				addLava(s, d, ncol, nrow, floorHeight);
 				ncol++;
 			default:
 				continue;
 			}
 		}
+		this.numCols = ncol;
 	}
 	
 	private static void addIndBlock(State s, Domain d, int x, int y, int z) {
@@ -335,7 +359,7 @@ public class MCStateGenerator {
 		wall.setValue("x", x);
 		wall.setValue("y", y);
 		wall.setValue("z", z);
-		wall.setValue("isGrain", 0); //
+		wall.setValue("isGoldOre", 0); //
 		wall.setValue("attDestroyable", 0); // Walls cannot be destroyed
 		s.addObject(wall);
 	}
@@ -349,22 +373,17 @@ public class MCStateGenerator {
 		s.addObject(door);
 	}
 	
-	private static void addGrain(State s, Domain d, int x, int y, int z) {
-		ObjectInstance grain = new ObjectInstance(d.getObjectClass("block"), "block"+x+y+z);
-		grain.setValue("x", x);
-		grain.setValue("y", y);
-		grain.setValue("z", z);
-		grain.setValue("isGrain", 1); // door is closed at first.
-		grain.setValue("attDestroyable", 1); // By default blocks can be destroyed
-		s.addObject(grain);
+	private static void addGoldOre(State s, Domain d, int x, int y, int z) {
+		ObjectInstance goldOre = s.getObject("block" + x + y + z);
+		goldOre.setValue("isGoldOre", 1);
 	}
 	
-	private static void addOven(State s, Domain d, int x, int y, int z) {
-		ObjectInstance oven = new ObjectInstance(d.getObjectClass("oven"), "oven"+x+y+z);
-		oven.setValue("x", x);
-		oven.setValue("y", y);
-		oven.setValue("z", z);
-		s.addObject(oven);
+	private static void addFurnace(State s, Domain d, int x, int y, int z) {
+		ObjectInstance furnace = new ObjectInstance(d.getObjectClass("furnace"), "furnace"+x+y+z);
+		furnace.setValue("x", x);
+		furnace.setValue("y", y);
+		furnace.setValue("z", z);
+		s.addObject(furnace);
 	}
 	
 	private static void addBlock(State s, Domain d, int x, int y, int z) {
@@ -372,7 +391,7 @@ public class MCStateGenerator {
 		block.setValue("x", x);
 		block.setValue("y", y);
 		block.setValue("z", z);
-		block.setValue("isGrain", 0); //
+		block.setValue("isGoldOre", 0); //
 		block.setValue("attDestroyable", 1); // By default blocks can be destroyed
 		s.addObject(block);
 	}
@@ -385,18 +404,18 @@ public class MCStateGenerator {
 	private static void addAgent(State s, Domain d, int x, int y, int z, int agentNumBlocks) {
 		ObjectInstance agent = new ObjectInstance(d.getObjectClass("agent"), "agent0");
 		agent.setValue("bNum", agentNumBlocks);  // Expliticly set the number of blocks agent can carry to 1
-		agent.setValue("agentHasGrain", 0);
-		agent.setValue("agentHasBread", 0);
+		agent.setValue("agentHasGoldOre", 0);
+		agent.setValue("agentHasGoldBlock", 0);
 		addObject(agent, s, d, x, y, z);
 	}
 
 	private static void addGoal(State s, Domain d, int x, int y, int z) {
 		ObjectInstance goal = new ObjectInstance(d.getObjectClass("goal"), "goal0");
-		addBlock(s, d, x, y, z - 1); // Goal needs to be on top of a block
 		addObject(goal, s, d, x, y, z);
 	}
 	
 	private static void addLava(State s, Domain d, int x, int y, int z) {
+		removeBlock(s, d, x, y, z);
 		ObjectInstance lava = new ObjectInstance(d.getObjectClass("lava"), "lava"+x+y+z);
 		lava.setValue("x", x);
 		lava.setValue("y", y);
@@ -413,17 +432,24 @@ public class MCStateGenerator {
 	
 
 	public static void main(String[] args) {
+		Random r = new Random();
+		
 		MinecraftDomain mcdg = new MinecraftDomain();
 		Domain domain = mcdg.generateDomain();
 		
 		MCStateGenerator mcsg = new MCStateGenerator();
+		
+//		for (int k=1;k < 10; k++) {
+//			mcsg.makeRandomMap(k);
+//		}
+		
 	}
 	
 	public int getMaxX() {
-		return this.numCols;
+		return this.numCols - 1;
 	}
 	public int getMaxY() {
-		return this.numRows;
+		return this.numRows - 1;
 	}
 
 	public int getBNum() {

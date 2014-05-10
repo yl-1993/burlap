@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.options.Option;
@@ -76,6 +77,12 @@ public abstract class OOMDPPlanner {
 	 */
 	protected int													debugCode;
 	
+	/**
+	 * Accessor for the enumerate states
+	 */
+	public Set<StateHashTuple> getStateHashTuples() {
+		return mapToStateIndex.keySet();
+	}
 	
 	/**
 	 * This method will cause the planner to begin planning from the specified initial state
