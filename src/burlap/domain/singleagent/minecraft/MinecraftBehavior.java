@@ -14,8 +14,6 @@ import java.util.Stack;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-import sun.font.EAttribute;
-
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.core.Domain;
@@ -583,13 +581,26 @@ public class MinecraftBehavior {
 		
 		RTDP planner = new RTDP(domain, rf, tf, 0.99, hashingFactory, vInit, numRollouts, maxDelta, maxDepth);
 		
-		int statePasses = planner.planFromStateAffordance(initialState, (ArrayList<Affordance>)kb.getAll());
+		// Done for NEML results. Quick fix.
+		
+		List<Affordance> realKB;
+		if (kb == null) {
+			realKB = generateAffordanceKB("bridge");
+		}
+		else {
+			realKB = kb.getAll();
+		}
+		
+		int statePasses = planner.planFromStateAffordance(initialState, (ArrayList<Affordance>)realKB);
 
 		// Create a Q-greedy policy from the planner
 		Policy p = new GreedyQPolicy(planner);
 		
 		System.out.println("Finished Planning");
-		EpisodeAnalysis ea = p.evaluateAffordanceBehavior(initialState, rf, tf, (ArrayList<Affordance>)kb.getAll(), maxSteps);
+		
+
+		
+		EpisodeAnalysis ea = p.evaluateAffordanceBehavior(initialState, rf, tf, (ArrayList<Affordance>)realKB, maxSteps);
 
 		double totalReward = sumReward(ea.rewardSequence);
 		
@@ -648,17 +659,17 @@ public class MinecraftBehavior {
 
 		ArrayList<Action> isPlaneFActions = new ArrayList<Action>();
 		isPlaneFActions.add(this.mcdg.forward);
-		isPlaneFActions.add(this.mcdg.jump);
+		
 		
 //		Option myFirstOption = new PolicyDefinedSubgoalOption("Sprint Forward", new StubbornPolicy(this.mcdg.forward), new OptionConditionTest(this.pfIsPlaneF, true), this.domain);
 //		myFirstOption.keepTrackOfRewardWith(rf, gamma);
 //		isPlaneFActions.add(myFirstOption);
 //		
-		PropositionalFunction nBridgePF = new IsAdjTrench(this.mcdg.ISADJTRENCH, domain,
-				new String[]{this.mcdg.CLASSAGENT}, new int[] {0,-1,0}, 2);
-		
-		Option bridgeBuilder = new PolicyDefinedSubgoalOption("Bridge Builder", new BridgeBuilderPolicy(this.mcdg.forward, this.mcdg.placeF, this.pfIsPlaneF, this.pfIsTrenchF), new OptionConditionTest(nBridgePF, true), this.domain);
-		bridgeBuilder.keepTrackOfRewardWith(rf, gamma);
+//		PropositionalFunction nBridgePF = new IsAdjTrench(this.mcdg.ISADJTRENCH, domain,
+//				new String[]{this.mcdg.CLASSAGENT}, new int[] {0,-1,0}, 2);
+//		
+//		Option bridgeBuilder = new PolicyDefinedSubgoalOption("Bridge Builder", new BridgeBuilderPolicy(this.mcdg.forward, this.mcdg.placeF, this.pfIsPlaneF, this.pfIsTrenchF), new OptionConditionTest(nBridgePF, true), this.domain);
+//		bridgeBuilder.keepTrackOfRewardWith(rf, gamma);
 
 		ArrayList<Action> isPlaneBActions = new ArrayList<Action>();
 		isPlaneBActions.add(this.mcdg.backward);
@@ -677,65 +688,73 @@ public class MinecraftBehavior {
 		
 		if (worldName.contains("bridge") || worldName.contains("epic")) {
 			// Add option
-//			isTrenchFActions.add(this.mcdg.placeF);
-//			isTrenchBActions.add(this.mcdg.placeB);
-//			isTrenchLActions.add(this.mcdg.placeL);
-//			isTrenchRActions.add(this.mcdg.placeR);
+			isTrenchFActions.add(this.mcdg.placeF);
+			isTrenchBActions.add(this.mcdg.placeB);
+			isTrenchLActions.add(this.mcdg.placeL);
+			isTrenchRActions.add(this.mcdg.placeR);
 
 //			isTrenchFActions.add(this.mcdg.jumpF);
-			isTrenchFActions.add(bridgeBuilder); // bridgeBuilder Option
+//			isTrenchFActions.add(bridgeBuilder); // bridgeBuilder Option
 //			isTrenchBActions.add(this.mcdg.jumpB);
 //			isTrenchLActions.add(this.mcdg.jumpL);
 //			isTrenchRActions.add(this.mcdg.jumpR);
 		}
 		
 			
-		ArrayList<Action> isDoorActions = new ArrayList<Action>();
-		isDoorActions.add(this.mcdg.forward);
-		isDoorActions.add(this.mcdg.backward);
-		isDoorActions.add(this.mcdg.left);
-		isDoorActions.add(this.mcdg.right);
-		isDoorActions.add(this.mcdg.openF);
-		isDoorActions.add(this.mcdg.openB);
-		isDoorActions.add(this.mcdg.openR);
-		isDoorActions.add(this.mcdg.openL);
-		
-		ArrayList<Action> isDstableWallFActions = new ArrayList<Action>();
-		isDstableWallFActions.add(this.mcdg.destF);
-		ArrayList<Action> isDstableWallBActions = new ArrayList<Action>();
-		isDstableWallBActions.add(this.mcdg.destB);
-		ArrayList<Action> isDstableWallLActions = new ArrayList<Action>();
-		isDstableWallLActions.add(this.mcdg.destL);
-		ArrayList<Action> isDstableWallRActions = new ArrayList<Action>();
-		isDstableWallRActions.add(this.mcdg.destR);
-		
-		ArrayList<Action> isOnGoldOreActions = new ArrayList<Action>();
-		isOnGoldOreActions.add(this.mcdg.pickUpGoldOre);
-		
-		ArrayList<Action> isAdjFurnaceActions = new ArrayList<Action>();
-		isAdjFurnaceActions.add(this.mcdg.placeGoldOre);
+//		ArrayList<Action> isDoorActions = new ArrayList<Action>();
+//		isDoorActions.add(this.mcdg.forward);
+//		isDoorActions.add(this.mcdg.backward);
+//		isDoorActions.add(this.mcdg.left);
+//		isDoorActions.add(this.mcdg.right);
+//		isDoorActions.add(this.mcdg.openF);
+//		isDoorActions.add(this.mcdg.openB);
+//		isDoorActions.add(this.mcdg.openR);
+//		isDoorActions.add(this.mcdg.openL);
+//		
+//		ArrayList<Action> isDstableWallFActions = new ArrayList<Action>();
+//		isDstableWallFActions.add(this.mcdg.destF);
+//		ArrayList<Action> isDstableWallBActions = new ArrayList<Action>();
+//		isDstableWallBActions.add(this.mcdg.destB);
+//		ArrayList<Action> isDstableWallLActions = new ArrayList<Action>();
+//		isDstableWallLActions.add(this.mcdg.destL);
+//		ArrayList<Action> isDstableWallRActions = new ArrayList<Action>();
+//		isDstableWallRActions.add(this.mcdg.destR);
+//		
+//		ArrayList<Action> isOnGoldOreActions = new ArrayList<Action>();
+//		isOnGoldOreActions.add(this.mcdg.pickUpGoldOre);
+//		
+//		ArrayList<Action> isAdjFurnaceActions = new ArrayList<Action>();
+//		isAdjFurnaceActions.add(this.mcdg.placeGoldOre);
 		
 		
 		// ----- DEFINE AFFORDANCES -----
 
 		Affordance affIsPlaneF = new Affordance(this.pfIsPlaneF, this.pfIsAtGoal, isPlaneFActions);
+		affIsPlaneF.setHardFlag(true);
 		Affordance affIsPlaneB = new Affordance(this.pfIsPlaneB, this.pfIsAtGoal, isPlaneBActions);
+		affIsPlaneB.setHardFlag(true);
 		Affordance affIsPlaneR = new Affordance(this.pfIsPlaneR, this.pfIsAtGoal, isPlaneRActions);
+		affIsPlaneR.setHardFlag(true);
 		Affordance affIsPlaneL = new Affordance(this.pfIsPlaneL, this.pfIsAtGoal, isPlaneLActions);
+		affIsPlaneL.setHardFlag(true);
 		
 		Affordance affIsAdjTrenchF = new Affordance(this.pfIsTrenchF, this.pfIsAtGoal, isTrenchFActions);
+		affIsAdjTrenchF.setHardFlag(true);
 		Affordance affIsAdjTrenchB = new Affordance(this.pfIsTrenchB, this.pfIsAtGoal, isTrenchBActions);
+		affIsAdjTrenchB.setHardFlag(true);
 		Affordance affIsAdjTrenchR = new Affordance(this.pfIsTrenchR, this.pfIsAtGoal, isTrenchRActions);
+		affIsAdjTrenchR.setHardFlag(true);
 		Affordance affIsAdjTrenchL = new Affordance(this.pfIsTrenchL, this.pfIsAtGoal, isTrenchLActions);
+		affIsAdjTrenchL.setHardFlag(true);
 		
-		Affordance affIsDstableWallF = new Affordance(this.pfIsDstableWallF, this.pfIsAtGoal, isDstableWallFActions);
-		Affordance affIsDstableWallB = new Affordance(this.pfIsDstableWallB, this.pfIsAtGoal, isDstableWallBActions);
-		Affordance affIsDstableWallR = new Affordance(this.pfIsDstableWallR, this.pfIsAtGoal, isDstableWallRActions);
-		Affordance affIsDstableWallL = new Affordance(this.pfIsDstableWallL, this.pfIsAtGoal, isDstableWallLActions);
-
-		Affordance affIsAdjDoor = new Affordance(this.pfIsAdjDoor, this.pfIsAtGoal, isDoorActions);
-		Affordance affIsAdjFurnace = new Affordance(this.pfIsAdjFurnace, this.pfIsAtGoal, isAdjFurnaceActions);
-		Affordance affIsOnGoldOre = new Affordance(this.pfIsOnGoldOre, this.pfIsAtGoal, isOnGoldOreActions);
+//		Affordance affIsDstableWallF = new Affordance(this.pfIsDstableWallF, this.pfIsAtGoal, isDstableWallFActions);
+//		Affordance affIsDstableWallB = new Affordance(this.pfIsDstableWallB, this.pfIsAtGoal, isDstableWallBActions);
+//		Affordance affIsDstableWallR = new Affordance(this.pfIsDstableWallR, this.pfIsAtGoal, isDstableWallRActions);
+//		Affordance affIsDstableWallL = new Affordance(this.pfIsDstableWallL, this.pfIsAtGoal, isDstableWallLActions);
+//
+//		Affordance affIsAdjDoor = new Affordance(this.pfIsAdjDoor, this.pfIsAtGoal, isDoorActions);
+//		Affordance affIsAdjFurnace = new Affordance(this.pfIsAdjFurnace, this.pfIsAtGoal, isAdjFurnaceActions);
+//		Affordance affIsOnGoldOre = new Affordance(this.pfIsOnGoldOre, this.pfIsAtGoal, isOnGoldOreActions);
 		
 		// ----- ADD AFFORDANCES -----
 		affordances.add(affIsPlaneF);
@@ -748,16 +767,16 @@ public class MinecraftBehavior {
 		affordances.add(affIsAdjTrenchR);
 		affordances.add(affIsAdjTrenchL);
 		
-		affordances.add(affIsAdjDoor);
-		affordances.add(affIsAdjFurnace);
-		affordances.add(affIsOnGoldOre);
-		
-		if (worldName.contains("tunnel") || worldName.contains("epic")) {
-			affordances.add(affIsDstableWallF);
-			affordances.add(affIsDstableWallB);
-			affordances.add(affIsDstableWallR);
-			affordances.add(affIsDstableWallL);
-		}
+//		affordances.add(affIsAdjDoor);
+//		affordances.add(affIsAdjFurnace);
+//		affordances.add(affIsOnGoldOre);
+//		
+//		if (worldName.contains("tunnel") || worldName.contains("epic")) {
+//			affordances.add(affIsDstableWallF);
+//			affordances.add(affIsDstableWallB);
+//			affordances.add(affIsDstableWallR);
+//			affordances.add(affIsDstableWallL);
+//		}
 		
 		
 		return affordances;
@@ -901,74 +920,74 @@ public class MinecraftBehavior {
 
 	}
 	
-	public static void main(String[] args) {
+	public static void getLearningResults(KnowledgeBase<Affordance> affLearnKnowlBase, MinecraftBehavior mcb) throws IOException {
 		
-		// Collect Results
-//		String[] planners = {"VI", "RTDP", "SG", "AFFVI", "AFFRTDP", "AFFSG"};
-//		try {
-//			getResults("specific_test/", new String[]{"VI"});
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		File[] maps = new File("maps/learn_result_maps").listFiles();
+
+		File fout = new File("results/learn_results/results.txt");
+		FileWriter fw = new FileWriter(fout.getAbsoluteFile());
+		BufferedWriter bw = new BufferedWriter(fw);
 		
-		
+		for(File map : maps) {
+			String mapname = map.getName();
+			bw.write(mapname + "\n");
+	
+			mcb.updateMap("learn_result_maps/" + mapname);
+
+			tf = new MultiplePFTF(new PropositionalFunction[]{pfAgentAtGoal, pfAgentNotInWorld});
+			goalCondition = new TFGoalCondition(tf);
+	
+//			// Setup learned knowledge base
+//			KnowledgeBase<Affordance> affLearnKnowlBase = new KnowledgeBase<Affordance>(Affordance.class);
+//			affLearnKnowlBase.load(mcb.domain, "trenches100-fullpolicy.kb");
+//			affLearnKnowlBase.process();
+			
+			
+//			double[] vanillaResults = mcb.RTDPPlanner(numRollouts, maxDepth);
+//			
+//			double statePasses = vanillaResults[0];
+//			double totalReward = vanillaResults[1];
+//			boolean completed = vanillaResults[2] == 1.0 ? true : false;
+//			
+//			bw.write("\tVanilla" + "," + statePasses + "," + totalReward + "," + completed + "\n");
+//			bw.flush();
+			
+			double[] affLearnResults = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, affLearnKnowlBase);
+
+			double statePasses = affLearnResults[0];
+			double totalReward = affLearnResults[1];
+			boolean completed = affLearnResults[2] == 1.0 ? true : false;
+			
+			bw.write("\tLearnedAffs" + "," + statePasses + "," + totalReward + "," + completed + "\n");
+			bw.flush();
+			
+			KnowledgeBase<Affordance> affKnowlBase = null;
+			
+			double[] affResults = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, affKnowlBase);
+			
+			statePasses = affResults[0];
+			totalReward = affResults[1];
+			completed = affResults[2] == 1.0 ? true : false;
+			
+			bw.write("\tExpertAffs" + "," + statePasses + "," + totalReward + "," + completed + "\n\n");
+			bw.flush();
+			
+		}
+		System.out.println(" ==== DONE WITH MAP ====");
+	}
+	
+	public static void main(String[] args) throws IOException {
+
 		// Setup Minecraft World
-		MinecraftBehavior mcb = new MinecraftBehavior("static/4world.map");
+		MinecraftBehavior mcb = new MinecraftBehavior("");
 		
-		tf = new MultiplePFTF(new PropositionalFunction[]{pfAgentAtGoal, pfAgentNotInWorld});
-		goalCondition = new TFGoalCondition(tf);
+		// Setup learned knowledge base
+		KnowledgeBase<Affordance> affLearnKnowlBase = new KnowledgeBase<Affordance>(Affordance.class);
+		affLearnKnowlBase.load(mcb.domain, "trenches5000.kb");
+		affLearnKnowlBase.process();
+
+		getLearningResults(affLearnKnowlBase, mcb);
 		
-		double[] numUpdates = {0.0};
-
-//		KnowledgeBase<Affordance> affKnowlBase = new KnowledgeBase<Affordance>(Affordance.class);
-//		
-//		affKnowlBase.load(mcb.domain, "trenches100.kb");
-//		affKnowlBase.process();
-//		double[] results = mcb.AffordanceVIPlanner(affKnowlBase);
-//		double[] results = mcb.ValueIterationPlanner();
-				
-		double[] vanillaResults = mcb.RTDPPlanner(numRollouts, maxDepth);
-//		double[] affResults = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, affKnowlBase);
-
-//		System.out.println("[AFFORDANCE] Updates: " + affResults[0] + ", Reward: " + affResults[1] + ", Finished: " + affResults[2]);
-		System.out.println("[VANILLA] Updates: " + vanillaResults[0] + ", Reward: " + vanillaResults[1] + ", Finished: " + vanillaResults[2]);
-		
-		// VANILLA OOMDP/VI
-//		numUpdates = mcb.ValueIterationPlanner();
-//		System.out.println("Updates: " + numUpdates[0] + " Reward: " + numUpdates[1] + " Finished: " + numUpdates[2]);
-
-		// RTDP
-//		numUpdates = mcb.RTDPPlanner(numRollouts, maxDepth);
-		
-		// SUBGOALS
-//		ArrayList<Subgoal> kb = mcb.generateSubgoalKB();
-//		int numUpdates = mcb.SubgoalPlanner(kb, 1000, 200);
-		
-		// AFFORDANCE - VI
-//		 ArrayList<Affordance> kb = mcb.generateAffordanceKB();
-//		 numUpdates = mcb.AffordanceVIPlanner(kb);
-		
-		// AFFORDANCE - RTDP
-//		 ArrayList<Affordance> kb = mcb.generateAffordanceKB(worldName);
-//		 double[] results = mcb.AffordanceRTDPPlanner(numRollouts, maxDepth, kb);
-//		 
-//		 numUpdates = results;
-//		
-//		 System.out.println(results[0] + "," + results[1] + "," + results[2]);
-		 
-		// AFFORDANCE - SG
-//		 ArrayList<Affordance> kb = mcb.generateAffordanceKB();
-//		 ArrayList<Subgoal> subgoals = mcb.generateSubgoalKB();
-//		 numUpdates = mcb.AffordanceSubgoalPlanner(kb, subgoals, numRollouts, maxDepth);
-
-		// END TIMER
-//		timeEnd = System.nanoTime();
-//		timeDelta = (double) (System.nanoTime()- timeStart) / 1000000000;
-//		System.out.println("Took "+ timeDelta + " s"); 
-
-//		System.out.println("AFFVI: " + numUpdates);
-
 		
 	}
 	

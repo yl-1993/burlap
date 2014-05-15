@@ -289,7 +289,7 @@ public class MinecraftDomain implements DomainGenerator{
 			this.placeGoldOre = new placeGoldOreAction(ACTIONPLACEGOLDORE, DOMAIN, "");
 
 			// Jump
-			this.jump = new JumpAction(ACTIONJUMP, DOMAIN, "");
+//			this.jump = new JumpAction(ACTIONJUMP, DOMAIN, "");
 			
 			allActions.add(this.openF);
 			allActions.add(this.openB);
@@ -297,7 +297,7 @@ public class MinecraftDomain implements DomainGenerator{
 			allActions.add(this.openL);
 			allActions.add(this.pickUpGoldOre);
 			allActions.add(this.placeGoldOre);
-			allActions.add(this.jump);
+//			allActions.add(this.jump);
 		}
 		
 		return DOMAIN;

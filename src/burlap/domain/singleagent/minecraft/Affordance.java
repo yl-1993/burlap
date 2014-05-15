@@ -30,6 +30,7 @@ public class Affordance {
 	private Dirichlet actionNumDistr;
 	private double dirichletHyperParam = 1.0;
 	private boolean learningMode = true;
+	private boolean hardFlag = false; // For NEML results, fix after
 	
 	public Affordance(PropositionalFunction pf, PropositionalFunction goal, List<Action> actions) {
 		this.pf = pf;
@@ -61,6 +62,10 @@ public class Affordance {
 		}
 		
 		initCounts();
+	}
+	
+	public void setHardFlag(boolean newVal) {
+		this.hardFlag = newVal;
 	}
 	
 	private void initCounts() {
@@ -110,6 +115,10 @@ public class Affordance {
 	 * @return
 	 */
 	public List<Action> getMeSumActions() {
+		if(this.hardFlag){
+			return this.allActions;
+		}
+		
 		int[] sizes = this.actionNumDistr.drawObservation(1);
 		int n = -1;
 		
@@ -120,7 +129,11 @@ public class Affordance {
 				break;
 			}
 		}
-
+//		n += 0;
+		if (n > 16)
+			return null;
+//			n = 16;
+		n = 4;
 //		int n = this.actionNumDistr.drawObservation(1)[0] + 1;
 		// n will ALWAYS be an array of a single value
 		

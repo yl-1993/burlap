@@ -28,7 +28,7 @@ public class AffordanceLearner {
 	
 	private KnowledgeBase<Affordance> affordanceKB;
 	private List<PropositionalFunction> lgds;
-	private int numWorldsPerLGD = 100;
+	private int numWorldsPerLGD = 5000;
 	private MinecraftBehavior mcb;
 	private MCStateGenerator mcsg;
 	private int numTrajectoriesPerWorld = 1;
@@ -111,11 +111,19 @@ public class AffordanceLearner {
 
 //			State initialState = getRandInitialState(planner);
 			State initialState = mcb.initialState;
-			
-			EpisodeAnalysis ea = p.evaluateBehavior(initialState, mcb.rf, mcb.tf, 100);
-			System.out.println("Initial State:\n" + initialState.getObject("agent0").getObjectDescription());
-			System.out.println("Trajectory: " + ea.getActionSequenceString());
-			for (State st: ea.stateSequence) {
+			double initVal = ((ValueFunctionPlanner)planner).value(initialState);
+			 
+//			EpisodeAnalysis ea = p.evaluateBehavior(initialState, mcb.rf, mcb.tf, 100);
+//			System.out.println("Initial State:\n" + initialState.getObject("agent0").getObjectDescription());
+//			System.out.println("Trajectory: " + ea.getActionSequenceString());
+//			for (State st: ea.stateSequence) {
+			for (State st: ((ValueFunctionPlanner)planner).getAllStates()) {
+				
+				double stVal = ((ValueFunctionPlanner)planner).value(st); 
+				if ( stVal < 10 * initVal) {  // NOTE: 10 is kind of randomly picked
+					continue;
+				}
+				
 				if (mcb.tf.isTerminal(st)) {
 					continue;
 				}
@@ -217,7 +225,7 @@ public class AffordanceLearner {
 		affLearn.printCounts();
 		
 
-		affKnowlBase.save("trenches100.kb");
+		affKnowlBase.save("trenches" + affLearn.numWorldsPerLGD + ".kb");
 	}
 
 }

@@ -250,7 +250,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 			}
 		}
 		
-		st.memoizeGroundedActions(res);
+//		st.memoizeGroundedActions(res);
 		
 		return res;
 	}

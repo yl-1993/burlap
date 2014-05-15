@@ -68,7 +68,7 @@ public class RTDP extends ValueFunctionPlanner {
 	 * The default value is 10.
 	 */
 
-	protected int						minNumRolloutsWithSmallValueChange = 5;
+	protected int						minNumRolloutsWithSmallValueChange = 2;
 	
 	/**
 	 * If set to use batch mode; Bellman updates will be stalled until a rollout is complete and then run in reverse.
