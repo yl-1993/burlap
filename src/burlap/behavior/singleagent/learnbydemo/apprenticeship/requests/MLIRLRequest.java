@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
@@ -165,6 +166,12 @@ public class MLIRLRequest {
 		for (double d : trajectoryWeights) {
 			this.trajectoryWeights.add(d);
 		}
+		Double[] weights = ArrayUtils.toObject(trajectoryWeights);
+		this.setTrajectoryWeights(weights);
+	}
+	
+	public void setTrajectoryWeights(Double[] trajectoryWeights) {
+		this.trajectoryWeights = Arrays.asList(trajectoryWeights);
 	}
 	
 	public void setNumberClusters(int numberClusters) {

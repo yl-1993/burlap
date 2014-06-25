@@ -7,6 +7,11 @@ import java.util.Random;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import org.apache.commons.lang3.ArrayUtils;
+
+import burlap.behavior.singleagent.EpisodeAnalysis;
+import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.learnbydemo.apprenticeship.ApprenticeshipLearning.FeatureWeights;
 import burlap.behavior.singleagent.learnbydemo.apprenticeship.requests.MLIRLRequest;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
@@ -60,8 +65,10 @@ public class MultipleIntentionIRL {
 			// From feature weights, compute Q_theta_t, and generate a new policy from the Q function
 			policy = computePolicyFromRewardWeights(planner, featureWeights, featureGenerator, startState, beta);
 			
+			// TODO set a realistic alpha
+			double alpha = 1.0;
 			// Compute new feature weights through gradient ascent, theta_{t+1} = theta_t + alpha * G(L)
-			featureWeights = this.computeNewFeatureWeightsViaGradientAscent(featureWeights, trajectoryWeights, policy, trajectories, 0.9);
+			featureWeights = this.computeNewFeatureWeightsViaGradientAscent(featureWeights, trajectoryWeights, policy, trajectories, alpha);
 			
 			// Compute log likelihood of data (L)
 			double logLikelihood = this.computeLogLikelihoodOfTrajectories(trajectoryWeights, policy, trajectories);
@@ -240,7 +247,8 @@ public class MultipleIntentionIRL {
 	 * @return The probabilities of each trajectory belonging to each cluster.
 	 */
 	protected List<double[]> computeTrajectoryInClusterProbabilities(List<Policy> policies, List<EpisodeAnalysis> trajectories, double[] clusterPriorProbabilities) {
-		List<double[]> trajectoryInClusterProbabilities = new ArrayList<double[]>(trajectories.size());
+		List<double[]> trajectoryInClusterProbabilities = 
+				new ArrayList<double[]>(trajectories.size());
 		
 		int numberClusters = policies.size();
 		EpisodeAnalysis episode;
