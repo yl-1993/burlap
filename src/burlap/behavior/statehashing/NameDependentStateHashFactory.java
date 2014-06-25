@@ -35,22 +35,24 @@ public class NameDependentStateHashFactory implements StateHashFactory {
 	
 	@Override
 	public StateHashTuple hashState(State s) {
-		
-		if(objectNameOrder.size() != s.getObservableObjects().size()){
-			this.addNewObjectNames(s);
+		List<ObjectInstance> objects = s.getObservableObjects();
+		if(objectNameOrder.size() != objects.size()){
+			this.addNewObjectNames(s, objects);
 		}
-		
 		
 		return new NameDependentStateHashTuple(s);
 	}
 	
-	protected void addNewObjectNames(State s){
-		List <ObjectInstance> obs = s.getObservableObjects();
+	protected void addNewObjectNames(State s) {
+		addNewObjectNames(s, s.getObservableObjects());
+	}
+	
+	protected void addNewObjectNames(State s, List<ObjectInstance> obs){
+		//List <ObjectInstance> obs = s.getObservableObjects();
 		for(ObjectInstance ob : obs){
 			String name = ob.getName();
-			if(!objectNames.contains(name)){
+			if(objectNames.add(name)){
 				objectNameOrder.add(name);
-				objectNames.add(name);
 			}
 		}
 	}
