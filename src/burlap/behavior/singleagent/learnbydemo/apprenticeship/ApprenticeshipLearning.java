@@ -9,6 +9,7 @@ import java.util.Random;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.learnbydemo.apprenticeship.requests.ApprenticeshipLearningRequest;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
@@ -38,8 +39,8 @@ import com.joptimizer.util.Utils;
 
 
 /** 
- * This algorithm will take expert trajectors and return a policy that models them. It is an implementation of the algorithm described by Abbel and Ng [1].
- * Both the projection method and quadractic programming version are available.
+ * This algorithm will take expert trajectories and return a policy that models them. It is an implementation of the algorithm described by Abbel and Ng [1].
+ * Both the projection method and quadratic programming version are available.
  * 
  * 
  * 
@@ -144,7 +145,7 @@ public class ApprenticeshipLearning {
 
 
 	/**
-	 * Computes a policy that models the expert trajectorys included in the request object.
+	 * Computes a policy that models the expert trajectories included in the request object.
 	 * @param request
 	 * @return the computed {@link Policy}
 	 */
@@ -165,7 +166,7 @@ public class ApprenticeshipLearning {
 	 * @param domain Domain in which we are planning
 	 * @param planner A Deterministic Planner created for the domain
 	 * @param featureMapping A feature mapping which maps states to a feature vector of values
-	 * @param expertEpisodes A list of expert demonstrated episodes generated from what we assume 
+	 * @param trajectories A list of expert demonstrated episodes generated from what we assume 
 	 * to be following some unknown reward function
 	 * @param gamma Discount factor gamma
 	 * @param epsilon Iteration tolerance
@@ -273,7 +274,7 @@ public class ApprenticeshipLearning {
 	 * @param domain
 	 * @param planner
 	 * @param featureMapping
-	 * @param expertEpisodes
+	 * @param trajectories
 	 * @param gamma
 	 * @param epsilon
 	 * @param maxIterations
@@ -525,11 +526,11 @@ public class ApprenticeshipLearning {
 	 * @author Stephen Brawner
 	 *
 	 */
-	private static class FeatureWeights {
+	public static class FeatureWeights {
 		private double[] weights;
 		private double score;
 
-		private FeatureWeights(double[] weights, double score) {
+		public FeatureWeights(double[] weights, double score) {
 			this.weights = weights.clone();
 			this.score = score;
 		}

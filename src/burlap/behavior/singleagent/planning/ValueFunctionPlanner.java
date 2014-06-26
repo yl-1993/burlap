@@ -522,7 +522,7 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	 * *is* compatible with {@link burlap.behavior.singleagent.options.Option} objects.
 	 * @param sh the given state
 	 * @param ga the given action
-	 * @return the double value of a Q-value for the given state-aciton pair.
+	 * @return the double value of a Q-value for the given state-action pair.
 	 */
 	protected double computeQ(StateHashTuple sh, GroundedAction ga){
 		

@@ -109,9 +109,9 @@ public class StateReachability {
 				for(TransitionProbability tp : tps){
 					StateHashTuple nsh = usingHashFactory.hashState(tp.s);
 					nGenerated++;
-					if(!hashedStates.contains(nsh)){
+					if(hashedStates.add(nsh)){
 						openList.offer(nsh);
-						hashedStates.add(nsh);
+						
 					}
 				}
 				
