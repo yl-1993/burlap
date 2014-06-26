@@ -59,7 +59,7 @@ public class ApprenticeshipLearning {
 	/**
 	 * Calculates the Feature Expectations given one demonstration, a feature mapping and a discount factor gamma
 	 * @param episodeAnalysis An EpisodeAnalysis object that contains a sequence of state-action pairs
-	 * @param featureMapping Feature Mapping which maps states to features
+	 * @param featureFunctions Feature Mapping which maps states to features
 	 * @param gamma Discount factor gamma
 	 * @return The Feature Expectations generated (double array that matches the length of the featureMapping)
 	 */
@@ -73,7 +73,7 @@ public class ApprenticeshipLearning {
 	 * Calculates the Feature Expectations given a list of demonstrations, a feature mapping and a 
 	 * discount factor gamma
 	 * @param episodes List of expert demonstrations as EpisodeAnalysis objects
-	 * @param featureMapping Feature Mapping which maps states to features
+	 * @param featureFunctions Feature Mapping which maps states to features
 	 * @param gamma Discount factor for future expected reward
 	 * @return The Feature Expectations generated (double array that matches the length of the featureMapping)
 	 */
@@ -107,7 +107,7 @@ public class ApprenticeshipLearning {
 	 * Generates an anonymous instance of a reward function derived from a FeatureMapping 
 	 * and associated feature weights
 	 * Computes (w^(i))T phi from step 4 in section 3
-	 * @param featureMapping The feature mapping of states to features
+	 * @param featureFunctions The feature mapping of states to features
 	 * @param featureWeights The weights given to each feature
 	 * @return An anonymous instance of RewardFunction
 	 */
@@ -135,7 +135,7 @@ public class ApprenticeshipLearning {
 	/**
 	 * Returns the initial state of a randomly chosen episode analysis
 	 * @param episodes
-	 * @return
+	 * @return a random episode's initial state
 	 */
 	public static State getInitialState(List<EpisodeAnalysis> episodes) {
 		Random rando = new Random();
@@ -147,7 +147,7 @@ public class ApprenticeshipLearning {
 	/**
 	 * Computes a policy that models the expert trajectories included in the request object.
 	 * @param request
-	 * @return
+	 * @return the computed {@link Policy}
 	 */
 	public static Policy getLearnedPolicy(ApprenticeshipLearningRequest request) {
 		if (!request.isValid()) {
@@ -171,7 +171,7 @@ public class ApprenticeshipLearning {
 	 * @param gamma Discount factor gamma
 	 * @param epsilon Iteration tolerance
 	 * @param maxIterations Maximum number of iterations to iterate
-	 * @return
+	 * @return the computed {@link Policy}
 	 */
 	private static Policy maxMarginMethod(ApprenticeshipLearningRequest request) {
 
@@ -589,7 +589,8 @@ public class ApprenticeshipLearning {
 			StateHashTuple stateHashTuple = this.hashFactory.hashState(state);
 
 			// Get all possible actions from this state
-			List<GroundedAction> groundedActions = state.getAllGroundedActionsFor(this.actions);
+			//List<GroundedAction> groundedActions = state.getAllGroundedActionsFor(this.actions);
+			List<GroundedAction> groundedActions = Action.getAllApplicableGroundedActionsFromActionList(this.actions, state);
 			Double[] probabilities = new Double[groundedActions.size()];
 			Double sum = 0.0;
 

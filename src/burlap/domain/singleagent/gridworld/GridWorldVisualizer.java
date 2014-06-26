@@ -28,7 +28,8 @@ public class GridWorldVisualizer {
 
 	
 	/**
-	 * Returns visualizer for a grid world domain with the provided wall map.
+	 * Returns visualizer for a grid world domain with the provided wall map. This method has been deprecated because the domain is no longer necessary.
+	 * Use the {@link #getVisualizer(int[][])} method instead.
 	 * @param d the domain of the grid world
 	 * @param map the wall map matrix where 0s indicate it is clear of walls, 1s indicate a full cell wall in that cell, 2s indicate a 1D north wall, 3s indicate a 1D east wall, and 4s indicate a 1D north and east wall. 
 	 * @return a grid world domain visualizer
@@ -44,7 +45,6 @@ public class GridWorldVisualizer {
 	
 	/**
 	 * Returns visualizer for a grid world domain with the provided wall map.
-	 * @param d the domain of the grid world
 	 * @param map the wall map matrix where 0s indicate it is clear of walls, 1s indicate a full cell wall in that cell, 2s indicate a 1D north wall, 3s indicate a 1D east wall, and 4s indicate a 1D north and east wall. 
 	 * @return a grid world domain visualizer
 	 */
@@ -58,7 +58,8 @@ public class GridWorldVisualizer {
 	
 	
 	/**
-	 * Returns state render layer for a gird world domain with the provided wall map.
+	 * Returns state render layer for a gird world domain with the provided wall map. This method has been deprecated because the domain object is no
+	 * longer necessary. Use the {@link #getRenderLayer(int[][])} method instead.
 	 * @param d the domain of the grid world
 	 * @param map the wall map matrix where 0s indicate it is clear of walls, 1s indicate a full cell wall in that cell, 2s indicate a 1D north wall, 3s indicate a 1D east wall, and 4s indicate a 1D north and east wall.
 	 * @return a grid world domain state render layer
@@ -108,7 +109,6 @@ public class GridWorldVisualizer {
 		
 		/**
 		 * Initializes for the domain and wall map
-		 * @param domain the domain of the grid world
 		 * @param map the wall map matrix where 1s indicate a wall in that cell and 0s indicate it is clear of walls
 		 */
 		public MapPainter(int [][] map) {
