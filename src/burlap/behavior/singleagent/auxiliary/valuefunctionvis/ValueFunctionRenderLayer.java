@@ -128,16 +128,16 @@ public class ValueFunctionRenderLayer implements RenderLayer {
 		 * check the terminal function for the planner if we can get it. If
 		 * the input state is a terminal state, then reutrn 0 since the value of all terminal states is 0.
 		 */
-		TerminalFunction tf = null;
-		if(this.planner instanceof OOMDPPlanner){
-			tf = ((OOMDPPlanner)this.planner).getTF();
-		}
+//		TerminalFunction tf = null;
+//		if(this.planner instanceof OOMDPPlanner){
+//			tf = ((OOMDPPlanner)this.planner).getTF();
+//		}
 		
-		if(tf != null){
-			if(tf.isTerminal(s)){
-				return 0.;
-			}
-		}
+//		if(tf != null){
+//			if(tf.isTerminal(s)){
+//				return 0.;
+//			}
+//		}
 		
 		List <QValue> qs = this.planner.getQs(s);
 		double max = Double.NEGATIVE_INFINITY;

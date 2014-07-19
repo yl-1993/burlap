@@ -282,9 +282,10 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 		}
 		
 		double q = 0.;
-		if(!this.tf.isTerminal(sh.s)){
-			q = this.computeQ(sh.s, matchingAt);
-		}
+//		if(!this.tf.isTerminal(sh.s)){
+//			q = this.computeQ(sh.s, matchingAt);
+//		}
+		q = this.computeQ(sh.s, matchingAt);
 		
 		return new QValue(sh.s, a, q);
 	}
@@ -367,11 +368,11 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 	 */
 	protected double performBellmanUpdateOn(StateHashTuple sh){
 		
-		if(this.tf.isTerminal(sh.s)){
-			//terminal states always have a state value of 0
-			valueFunction.put(sh, 0.);
-			return 0.;
-		}
+//		if(this.tf.isTerminal(sh.s)){
+//			//terminal states always have a state value of 0
+//			valueFunction.put(sh, 0.);
+//			return 0.;
+//		}
 		
 		
 		double maxQ = Double.NEGATIVE_INFINITY;
@@ -401,6 +402,11 @@ public abstract class ValueFunctionPlanner extends OOMDPPlanner implements QComp
 		}
 		
 		valueFunction.put(sh, maxQ);
+		
+		if(this.tf.isTerminal(sh.s)){
+			//terminal states always have a state value of 0
+			System.out.println(valueFunction.get(sh));
+		}
 		
 		return maxQ;
 	}

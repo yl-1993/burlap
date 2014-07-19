@@ -121,7 +121,8 @@ public class ApprenticeshipLearning {
 				double[] featureWeightValues = newFeatureWeights.getWeights();
 				double sumReward = 0;
 				double [] fv = newFeatureFunctions.generateFeatureVectorFrom(state);
-				for (int i = 0; i < fv.length; ++i) {
+				int len = Math.min(featureWeightValues.length, fv.length);
+				for (int i = 0; i < len; ++i) {
 					sumReward += featureWeightValues[i] * fv[i];
 				}
 				return sumReward;

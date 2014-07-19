@@ -82,11 +82,12 @@ public class MultipleIntentionIRL {
 			
 		}
 //		double[] tmp = featureWeights.getWeights();
-//		tmp[0] = 41;
-//		tmp[1] = -2.25;
-//		tmp[2] = -1.25;
-//		tmp[3] = -4.25;
-//		tmp[4] = -0.25;
+//		//double[] tmp = new double[5];
+//		tmp[0] = 37.83580025368231;
+//		tmp[1] = -1.770403828851468;
+//		tmp[2] = -0.31205622899830726;
+//		tmp[3] = -1.662219821890951;
+//		tmp[4] = -0.2991081059366897;
 //		tmp[5] = tmp[1];
 //		tmp[6] = tmp[2];
 //		tmp[7] = tmp[3];
@@ -155,7 +156,7 @@ public class MultipleIntentionIRL {
 		double[] weights = new double[length];
 		double sum = 0;
 		for (int i = 0; i < length; i++) {
-			weights[i] = -random.nextDouble();
+			weights[i] = -1 + random.nextDouble() * (1 - (-1));
 			sum += weights[i];
 		}
 		for (int i = 0; i < length; i++) {
@@ -250,7 +251,7 @@ public class MultipleIntentionIRL {
 //				System.out.println(actions.get(j).toString());
 //				System.out.println(rewards.get(j).toString());
 //				System.out.println(bPolicySum.getValue(states.get(j)));
-				if(Double.isNaN(bPolicySum.getPiPrime(states.get(j), qValue, feature))){
+				if(Double.isNaN(sum)){
 					System.out.println("NAN!!!");
 					//return 0.0;
 				}
