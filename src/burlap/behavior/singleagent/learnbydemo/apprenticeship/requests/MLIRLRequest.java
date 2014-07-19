@@ -80,20 +80,25 @@ public class MLIRLRequest {
 	public static final double 			DEFAULT_GAMMA = 0.99;
 	public static final double 			DEFAULT_EPSILON = 0.01;
 	public static final double			DEFAULT_BETA = 0.5;
-	public static final int 			DEFAULT_MAXITERATIONS = 100;
+	public static final int 			DEFAULT_MAXITERATIONS = 200;
 	public static final int 			DEFAULT_POLICYCOUNT = 5;	
 
 	public MLIRLRequest() {
 		this.initDefaults();
 	}
 
-	public MLIRLRequest(Domain domain, OOMDPPlanner planner, StateToFeatureVectorGenerator featureGenerator, List<EpisodeAnalysis> expertEpisodes, StateGenerator startStateGenerator) {
+	public MLIRLRequest(Domain domain, OOMDPPlanner planner,
+			StateToFeatureVectorGenerator featureGenerator, 
+			List<EpisodeAnalysis> expertEpisodes, Double[] trajectoryWeights, 
+			StateGenerator startStateGenerator) {
 		this.initDefaults();
 		this.setDomain(domain);
 		this.setPlanner(planner);
 		this.setFeatureGenerator(featureGenerator);
 		this.setExpertEpisodes(expertEpisodes);
+		this.setTrajectoryWeights(trajectoryWeights);
 		this.setStartStateGenerator(startStateGenerator);
+		this.setFeatureVectorLength(domain.getPropFunctions().size());
 	}
 
 	public MLIRLRequest(MLIRLRequest request) {
@@ -102,7 +107,9 @@ public class MLIRLRequest {
 		this.setPlanner(request.getPlanner());
 		this.setFeatureGenerator(request.getFeatureGenerator());
 		this.setExpertEpisodes(request.getExpertEpisodes());
+		this.setTrajectoryWeights(request.getTrajectoryWeights());
 		this.setStartStateGenerator(request.getStartStateGenerator());
+		this.setFeatureVectorLength(request.getDomain().getPropFunctions().size());
 	}
 
 	private void initDefaults() {
@@ -174,6 +181,10 @@ public class MLIRLRequest {
 		this.trajectoryWeights = Arrays.asList(trajectoryWeights);
 	}
 	
+	public void setTrajectoryWeights(List<Double> trajectoryWeights) {
+		this.trajectoryWeights = trajectoryWeights;
+	}
+	
 	public void setNumberClusters(int numberClusters) {
 		this.numberClusters = numberClusters;
 	}
@@ -202,7 +213,7 @@ public class MLIRLRequest {
 
 	public List<EpisodeAnalysis> getExpertEpisodes() { return new ArrayList<EpisodeAnalysis>(this.trajectories);}
 
-	public List<Double> getEpisodeWeights() {return new ArrayList<Double>(this.trajectoryWeights);}
+	public List<Double> getTrajectoryWeights() {return new ArrayList<Double>(this.trajectoryWeights);}
 	
 	public int getNumberClusters() {return this.numberClusters;}
 	
