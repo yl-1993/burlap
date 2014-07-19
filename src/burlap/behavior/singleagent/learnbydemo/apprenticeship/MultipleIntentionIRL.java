@@ -45,44 +45,52 @@ public class MultipleIntentionIRL {
 		State startState = request.getStartStateGenerator().generateState();
 		StateHashFactory hashFactory = request.getStateHashFactory();
 		double beta = request.getBeta();
+		double epsilon = request.getEpsilon();
 		List<Double> trajectoryWeights = request.getTrajectoryWeights();
 		List<EpisodeAnalysis> trajectories = request.getExpertEpisodes();
 		OOMDPPlanner planner = request.getPlanner();
 		int numIterations = request.getMaxIterations();
 		int featureVectorLength = request.getFeatureVectorLength();
+		
 		// Initialize choose random set of reward weights
 		ApprenticeshipLearning.FeatureWeights featureWeights = 
 				getRandomRewardWeights(featureVectorLength);
-		
+		ApprenticeshipLearning.FeatureWeights lastFeatureWeights = featureWeights;
 		// Jerry
 		BoltzmannPolicySum bPolicySum = new BoltzmannPolicySum(
 				(QComputablePlanner)planner, featureGenerator, featureWeights, beta, gamma);
 		
 		// TODO set a realistic alpha
 		double alpha = 1.0;
-		
+		double squareError = 0.0;
 		// for t = 1 to M do
 		for (int i = 0; i < numIterations; i++) {
 			// Compute new feature weights through gradient ascent, theta_{t+1} = theta_t + alpha * G(L)
-			featureWeights = computeNewFeatureWeightsViaGradientAscent
+			lastFeatureWeights = computeNewFeatureWeightsViaGradientAscent
 					(featureWeights, trajectoryWeights, bPolicySum,
 							 trajectories, startState, domain, hashFactory, alpha);
 			alpha *= 0.99;
+			squareError = computeSquareError(lastFeatureWeights, featureWeights);
+			featureWeights = lastFeatureWeights;
+			// Check Convergence
+			if(squareError < epsilon){
+				break;
+			}
 			// Compute log likelihood of data (L)
 			//double logLikelihood = computeLogLikelihood(trajectoryWeights, policy, trajectories);
 			//System.out.println("L: "+logLikelihood+"\n");
 			
 		}
 //		double[] tmp = featureWeights.getWeights();
-//		tmp[0] = 0.8553665098373343;
-//		tmp[1] = 0.45023816863448645;
-//		tmp[2] = -0.02462960847686731;
-//		tmp[3] = 0.4420365715459394676;
-//		tmp[4] = -0.02391545198949;
-//		tmp[5] = -tmp[1];
-//		tmp[6] = -tmp[2];
-//		tmp[7] = -tmp[3];
-//		tmp[8] = -tmp[4];
+//		tmp[0] = 41;
+//		tmp[1] = -2.25;
+//		tmp[2] = -1.25;
+//		tmp[3] = -4.25;
+//		tmp[4] = -0.25;
+//		tmp[5] = tmp[1];
+//		tmp[6] = tmp[2];
+//		tmp[7] = tmp[3];
+//		tmp[8] = tmp[4];
 //		featureWeights = new ApprenticeshipLearning.FeatureWeights(tmp,1.0);
 		
 		// Compute new reward functions using new feature weights
@@ -147,7 +155,7 @@ public class MultipleIntentionIRL {
 		double[] weights = new double[length];
 		double sum = 0;
 		for (int i = 0; i < length; i++) {
-			weights[i] = random.nextDouble();
+			weights[i] = -random.nextDouble();
 			sum += weights[i];
 		}
 		for (int i = 0; i < length; i++) {
@@ -267,7 +275,7 @@ public class MultipleIntentionIRL {
 			ApprenticeshipLearning.FeatureWeights featureWeights, List<Double> trajectoryWeights, 
 			BoltzmannPolicySum bPolicySum,  List<EpisodeAnalysis> episodes, 
 			State startState, Domain domain,
-			StateHashFactory hashFactory,double alpha ) {
+			StateHashFactory hashFactory, double alpha) {
 		int kIterationNum = 1;
 		double lPrimeValue = 0.0;
 		double[] weights = featureWeights.getWeights();
@@ -390,6 +398,17 @@ public class MultipleIntentionIRL {
 
 	protected static void updateFeatureWeights(double[] weights, BoltzmannPolicySum bPolicySum) {
 		bPolicySum.updateFeatureWeights(weights);
+	}
+	
+	protected static double computeSquareError(ApprenticeshipLearning.FeatureWeights lastFeatureWeights, ApprenticeshipLearning.FeatureWeights curFeatureWeights) {
+		double squareError = 0.0;
+		double[] lastWeights = lastFeatureWeights.getWeights();
+		double[] curWeights = curFeatureWeights.getWeights();
+		int len = Math.min(lastWeights.length, curWeights.length);
+		for (int i = 0; i < len; i++) {
+			squareError += ((lastWeights[i] - curWeights[i])*(lastWeights[i] - curWeights[i]));
+		}
+		return squareError;
 	}
 	
 	/**

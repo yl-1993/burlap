@@ -80,7 +80,7 @@ public class MLIRLRequest {
 	public static final double 			DEFAULT_GAMMA = 0.99;
 	public static final double 			DEFAULT_EPSILON = 0.01;
 	public static final double			DEFAULT_BETA = 0.5;
-	public static final int 			DEFAULT_MAXITERATIONS = 200;
+	public static final int 			DEFAULT_MAXITERATIONS = 100;
 	public static final int 			DEFAULT_POLICYCOUNT = 5;	
 
 	public MLIRLRequest() {
