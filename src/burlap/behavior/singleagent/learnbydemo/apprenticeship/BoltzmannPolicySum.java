@@ -1,36 +1,13 @@
 package burlap.behavior.singleagent.learnbydemo.apprenticeship;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-
-//import org.apache.commons.math3.analysis.function.Exp;
-
-
-
-
-
-
-
-
-
-import java.util.Map;
-
-import org.apache.commons.collections.DoubleOrderedMap;
-import org.jfree.chart.Effect3D;
-
-import cc.mallet.grmm.inference.MessageArray.Iterator;
 import burlap.behavior.singleagent.QValue;
-import burlap.behavior.singleagent.learnbydemo.apprenticeship.ApprenticeshipLearning.FeatureWeights;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
-import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TransitionProbability;
 import burlap.oomdp.singleagent.GroundedAction;
@@ -49,7 +26,7 @@ public class BoltzmannPolicySum {
 	private HashMap<HashFeatureTuple, Double> vLastPrimeValues; 
 	private QComputablePlanner planner;
 	private StateToFeatureVectorGenerator featureGenerator;
-	private ApprenticeshipLearning.FeatureWeights featureWeights;
+	private FeatureWeights featureWeights;
 	private double beta;
 	private double gamma;
 	private StateHashFactory stateHashFactory;
@@ -158,7 +135,7 @@ public class BoltzmannPolicySum {
 	
 	public BoltzmannPolicySum(QComputablePlanner planner, 
 			StateToFeatureVectorGenerator featureGenerator, 
-			ApprenticeshipLearning.FeatureWeights featureWeights, 
+			FeatureWeights featureWeights, 
 			double beta, double gamma) {
 		this.planner = planner;
 		this.beta = beta;
@@ -206,6 +183,13 @@ public class BoltzmannPolicySum {
 		return qValue;
 	}
 	
+	/**
+	 * 
+	 * @param q
+	 * @param state
+	 * @param feature
+	 * @return
+	 */
 	public double getQPrime(QValue q, State state, int feature){
 		StateActionTuple saTuple = new StateActionTuple(state,(GroundedAction)q.a);
 		QFeatureTuple qfTuple = new QFeatureTuple(saTuple, feature);
@@ -431,7 +415,7 @@ public class BoltzmannPolicySum {
 	}
 	
 	public void updateFeatureWeights(double[] weights){
-		this.featureWeights = new FeatureWeights(weights, 1.0); // TODO: The second parameter is useless here 
+		this.featureWeights = new FeatureWeights(weights); // TODO: The second parameter is useless here 
 	}
 	
 	public void clearAllValuesExceptV(){

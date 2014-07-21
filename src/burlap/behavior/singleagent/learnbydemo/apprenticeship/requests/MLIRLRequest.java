@@ -13,7 +13,7 @@ import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.TerminalFunction;
 
-public class MLIRLRequest {
+public class MLIRLRequest extends EMCluster {
 
 	/**
 	 * The domain in which IRL is to be performed
@@ -46,11 +46,6 @@ public class MLIRLRequest {
 	 */
 	protected List<Double>							trajectoryWeights;
 	
-	
-	/**
-	 * The number of clusters used in EM
-	 */
-	protected int									numberClusters;
 	
 	/**
 	 * The initial state generator that models the initial states from which the expert trajectories were drawn
@@ -184,10 +179,6 @@ public class MLIRLRequest {
 	public void setTrajectoryWeights(List<Double> trajectoryWeights) {
 		this.trajectoryWeights = trajectoryWeights;
 	}
-	
-	public void setNumberClusters(int numberClusters) {
-		this.numberClusters = numberClusters;
-	}
 
 	public void setStartStateGenerator(StateGenerator startStateGenerator) { this.startStateGenerator = startStateGenerator;}
 
@@ -214,8 +205,6 @@ public class MLIRLRequest {
 	public List<EpisodeAnalysis> getExpertEpisodes() { return new ArrayList<EpisodeAnalysis>(this.trajectories);}
 
 	public List<Double> getTrajectoryWeights() {return new ArrayList<Double>(this.trajectoryWeights);}
-	
-	public int getNumberClusters() {return this.numberClusters;}
 	
 	public StateGenerator getStartStateGenerator() {return this.startStateGenerator;}
 

@@ -1,7 +1,6 @@
 package burlap.behavior.singleagent.learnbydemo.apprenticeship;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -9,19 +8,11 @@ import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.omg.CORBA.INTERNAL;
-
-import burlap.behavior.singleagent.EpisodeAnalysis;
-import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.auxiliary.StateReachability;
-import burlap.behavior.singleagent.learnbydemo.apprenticeship.ApprenticeshipLearning.FeatureWeights;
 import burlap.behavior.singleagent.learnbydemo.apprenticeship.requests.MLIRLRequest;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.BoltzmannQPolicy;
-import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
-import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.singleagent.vfa.StateToFeatureVectorGenerator;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.oomdp.core.Domain;
@@ -53,10 +44,10 @@ public class MultipleIntentionIRL {
 		int featureVectorLength = request.getFeatureVectorLength();
 		
 		// Initialize choose random set of reward weights
-		ApprenticeshipLearning.FeatureWeights featureWeights = 
+		FeatureWeights featureWeights = 
 				getRandomRewardWeights(featureVectorLength);
-		ApprenticeshipLearning.FeatureWeights lastFeatureWeights = featureWeights;
-		// Jerry
+		
+		FeatureWeights lastFeatureWeights = featureWeights;
 		BoltzmannPolicySum bPolicySum = new BoltzmannPolicySum(
 				(QComputablePlanner)planner, featureGenerator, featureWeights, beta, gamma);
 		
@@ -70,31 +61,33 @@ public class MultipleIntentionIRL {
 					(featureWeights, trajectoryWeights, bPolicySum,
 							 trajectories, startState, domain, hashFactory, alpha);
 			alpha *= 0.99;
+			// Compute error
 			squareError = computeSquareError(lastFeatureWeights, featureWeights);
+			// Update
 			featureWeights = lastFeatureWeights;
 			// Check Convergence
 			if(squareError < epsilon){
 				break;
 			}
-			// Compute log likelihood of data (L)
-			//double logLikelihood = computeLogLikelihood(trajectoryWeights, policy, trajectories);
+			// Compute log likelihood of data (L), L is supposed to be larger and larger
+			//double logLikelihood = computeLogLikelihood(trajectoryWeights, bPolicySum, trajectories);
 			//System.out.println("L: "+logLikelihood+"\n");
-			
 		}
 		
 		// Compute new reward functions using new feature weights
 		RewardFunction rewardFunction = 
 				ApprenticeshipLearning.generateRewardFunction(featureGenerator, featureWeights);
 		
-		// Need to reset planner every time to accommodate new reward function
+		// Reset planner to accommodate new reward function
 		planner.resetPlannerResults();
 		planner.plannerInit(domain, rewardFunction, terminalFunction, gamma , hashFactory);
 		
-		// From feature weights, compute Q_theta_t, new reward function and generate a new policy from the Q function
+		// From feature weights, compute Q_theta_t, and generate a new policy from the Q function
 		Policy policy = computePolicyFromRewardWeights(planner, featureWeights, featureGenerator, startState, beta);
 		
-		//String res = policy.evaluateBehavior(request.getStartStateGenerator().generateState(), rewardFunction, terminalFunction).getActionSequenceString();
-		//System.out.println("res: "+res+"\n");
+		// Evaluate the behavior of the new policy
+		String res = policy.evaluateBehavior(request.getStartStateGenerator().generateState(), rewardFunction, terminalFunction).getActionSequenceString();
+		System.out.println("res: "+res+"\n");
 		
 		System.out.println("mlirl finish!");
 		
@@ -114,13 +107,13 @@ public class MultipleIntentionIRL {
 				new ArrayList<double[]>(numberClusters);
 		
 		// Randomly initialize the prior probabilities of each cluster
-		ApprenticeshipLearning.FeatureWeights clusterPriors = 
+		FeatureWeights clusterPriors = 
 				getRandomRewardWeights(numberClusters);
 		double[] clusterPriorProbabilities = clusterPriors.getWeights();
 		
 		// Randomly initialize the feature weights of each cluster
 		for (int i = 0; i < numberClusters; i++) {
-			ApprenticeshipLearning.FeatureWeights weights = 
+			FeatureWeights weights = 
 					getRandomRewardWeights(featureWeightLength);
 			featureWeightClusters.add(weights.getWeights());
 		}
@@ -139,7 +132,7 @@ public class MultipleIntentionIRL {
 	 * @param length
 	 * @return
 	 */
-	protected static ApprenticeshipLearning.FeatureWeights getRandomRewardWeights(int length) {
+	protected static FeatureWeights getRandomRewardWeights(int length) {
 		Random random = new Random();
 		double[] weights = new double[length];
 		double sum = 0;
@@ -150,7 +143,7 @@ public class MultipleIntentionIRL {
 		for (int i = 0; i < length; i++) {
 			weights[i] /= sum;
 		}
-		return new ApprenticeshipLearning.FeatureWeights(weights, 0.0);
+		return new FeatureWeights(weights);
 	}
 	
 	/**
@@ -163,7 +156,7 @@ public class MultipleIntentionIRL {
 	 * @return A BoltzmannQPolicy generated from the feature weights
 	 */
 	protected static Policy computePolicyFromRewardWeights(OOMDPPlanner planner, 
-			ApprenticeshipLearning.FeatureWeights featureWeights,
+			FeatureWeights featureWeights,
 			StateToFeatureVectorGenerator featureGenerator, State startState, double beta) {
 
 		RewardFunction rewardFunction = 
@@ -183,7 +176,9 @@ public class MultipleIntentionIRL {
 	 * @return the log-likelihood of the trajectories
 	 */
 	protected static double computeLogLikelihood(
-			List<Double> trajectoryWeights, Policy policy, List<EpisodeAnalysis> trajectories) {
+			List<Double> trajectoryWeights, 
+			BoltzmannPolicySum bPolicySum, 
+			List<EpisodeAnalysis> trajectories) {
 		
 		double logLikelihood = 0.0;
 		
@@ -192,14 +187,14 @@ public class MultipleIntentionIRL {
 			EpisodeAnalysis episode = trajectories.get(i);
 			List<GroundedAction> actions = episode.actionSequence;
 			List<State> states = episode.stateSequence;
+			List<Double> rewards = episode.rewardSequence;
 			int trajectoryLength = Math.min(actions.size(), states.size());
 			double sum = 0.0;
 			double probability = 0.0;
 			
 			for (int j = 0; j < trajectoryLength; j++) {
-				GroundedAction ga = actions.get(j);
-				State s = states.get(j);
-				probability = policy.getProbOfAction(s, ga); 
+				QValue qValue = new QValue(states.get(j),actions.get(j),rewards.get(j));
+				probability = bPolicySum.getPi(states.get(j), qValue);
 				sum += Math.log(probability);
 			}
 			
@@ -209,13 +204,12 @@ public class MultipleIntentionIRL {
 		return logLikelihood;
 	}
 	
-	// Jerry
 	// w, r, V_{i-1}, V'_{i-1} will not change for this iteration
 	protected static double computeLogLikelihoodPrime(
 			List<EpisodeAnalysis> trajectories, 
 			BoltzmannPolicySum bPolicySum,
 			List<Double> trajectoryWeights, 		
-			ApprenticeshipLearning.FeatureWeights featureWeights,
+			FeatureWeights featureWeights,
 			int feature){
 		double lPrimeValue = 0.0;
 		for (int i = 0; i < trajectories.size(); i++) {
@@ -226,22 +220,14 @@ public class MultipleIntentionIRL {
 			List<Double> rewards = episode.rewardSequence;
 			int trajectoryLength = Math.min(actions.size(), states.size());
 			double sum = 0.0;
-			
+			// sum_j (1 / Pi(s,a))*(d Pi(s,a) / d feature)
 			for (int j = 0; j < trajectoryLength; j++) {
 				QValue qValue = new QValue(states.get(j),actions.get(j),rewards.get(j));
-				// 
 				sum += (bPolicySum.getPiPrime(states.get(j), qValue, feature)
 						/ bPolicySum.getPi(states.get(j), qValue));	
-				//
-				//bPolicySum.getValuePrime(states.get(j), feature);
-				//
-//				System.out.println(states.get(j).toString());
-//				System.out.println(actions.get(j).toString());
-//				System.out.println(rewards.get(j).toString());
-//				System.out.println(bPolicySum.getValue(states.get(j)));
+				// if sum is NAN, stop it and use weights generated by last iteration
 				if(Double.isNaN(sum)){
 					System.out.println("NAN!!!");
-					//return 0.0;
 				}
 			}
 			lPrimeValue += trajectoryWeights.get(i) * sum;
@@ -250,7 +236,6 @@ public class MultipleIntentionIRL {
 		return lPrimeValue;
 	}
 	
-	// Jerry
 	/**
 	 * Computes theta_{t+1} = theta_t + alpha * G(L)
 	 * Computes new feature weights by taking a small step in the positive step of the gradient
@@ -260,8 +245,8 @@ public class MultipleIntentionIRL {
 	 * @param episodes
 	 * @return New feature weights
 	 */
-	protected static ApprenticeshipLearning.FeatureWeights computeNewFeatureWeightsViaGradientAscent(
-			ApprenticeshipLearning.FeatureWeights featureWeights, List<Double> trajectoryWeights, 
+	protected static FeatureWeights computeNewFeatureWeightsViaGradientAscent(
+			FeatureWeights featureWeights, List<Double> trajectoryWeights, 
 			BoltzmannPolicySum bPolicySum,  List<EpisodeAnalysis> episodes, 
 			State startState, Domain domain,
 			StateHashFactory hashFactory, double alpha) {
@@ -299,7 +284,7 @@ public class MultipleIntentionIRL {
 		// set new weights
 		updateFeatureWeights(weights, bPolicySum);
 		
-		return new ApprenticeshipLearning.FeatureWeights(weights, 1.0);
+		return new FeatureWeights(weights);
 	}
 
 	protected static void updateLastV(BoltzmannPolicySum bPolicySum, 
@@ -389,7 +374,7 @@ public class MultipleIntentionIRL {
 		bPolicySum.updateFeatureWeights(weights);
 	}
 	
-	protected static double computeSquareError(ApprenticeshipLearning.FeatureWeights lastFeatureWeights, ApprenticeshipLearning.FeatureWeights curFeatureWeights) {
+	protected static double computeSquareError(FeatureWeights lastFeatureWeights, FeatureWeights curFeatureWeights) {
 		double squareError = 0.0;
 		double[] lastWeights = lastFeatureWeights.getWeights();
 		double[] curWeights = curFeatureWeights.getWeights();

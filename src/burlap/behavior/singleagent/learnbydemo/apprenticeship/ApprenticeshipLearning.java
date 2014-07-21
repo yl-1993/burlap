@@ -209,14 +209,15 @@ public class ApprenticeshipLearning {
 		int policyCount = request.getPolicyCount();
 		for (int i = 0; i < maxIterations; ++i) {
 			// (2) Compute t^(i) = max_w min_j (wT (uE - u^(j)))
-			FeatureWeights featureWeights = null;
+			FeatureWeightsWithScores featureWeights = null;
 
 			while(featureWeights == null) {
 				 featureWeights = solveFeatureWeights(expertExpectations, featureExpectationsHistory);
 			}
 			
-			for(int z = 0; z < featureWeights.weights.length; z++){
-				DPrint.c(debugCodeRFWeights, z + ": " + featureWeights.weights[z] + "; ");
+			double[] weights  = featureWeights.getWeights();
+			for(int z = 0; z < weights.length; z++){
+				DPrint.c(debugCodeRFWeights, z + ": " + weights[z] + "; ");
 			}
 			DPrint.cl(debugCodeRFWeights, "");
 
@@ -333,7 +334,7 @@ public class ApprenticeshipLearning {
 			else {
 				newProjFE = projectExpertFE(expertExpectations, curFE, lastProjFE);
 			}
-			FeatureWeights featureWeights = getWeightsProjectionMethod(expertExpectations, newProjFE);
+			FeatureWeightsWithScores featureWeights = getWeightsProjectionMethod(expertExpectations, newProjFE);
 			tHistory[i] = featureWeights.getScore();
 			DPrint.cl(debugCodeScore, "Score: "+tHistory[i]);
 			lastProjFE = newProjFE; //don't forget to set the old projection to the new one!
@@ -344,8 +345,9 @@ public class ApprenticeshipLearning {
 				return policy;
 			}
 
-			for(int z = 0; z < featureWeights.weights.length; z++){
-				DPrint.c(debugCodeRFWeights, z + ": " + featureWeights.weights[z] + "; ");
+			double[] weights = featureWeights.getWeights();
+			for(int z = 0; z < weights.length; z++){
+				DPrint.c(debugCodeRFWeights, z + ": " + weights[z] + "; ");
 			}
 			DPrint.cl(debugCodeRFWeights, "");
 			
@@ -395,7 +397,7 @@ public class ApprenticeshipLearning {
 	 * @param featureExpectations Feature History of feature expectations generated from past policies
 	 * @return the best feature weights
 	 */
-	private static FeatureWeights solveFeatureWeights(
+	private static FeatureWeightsWithScores solveFeatureWeights(
 			double[] expertExpectations, List<double[]> featureExpectations) {
 		// We are solving a Quadratic Programming Problem here, yay!
 		// Solve equation of form xT * P * x + qT * x + r
@@ -452,7 +454,7 @@ public class ApprenticeshipLearning {
 		double[] solution = optimizationResponse.getSolution();
 		double[] weights = Arrays.copyOfRange(solution, 0, weightsSize);
 		double score = solution[weightsSize];
-		return new FeatureWeights(weights, score);
+		return new FeatureWeightsWithScores(weights, score);
 	}
 
 	/**
@@ -504,7 +506,7 @@ public class ApprenticeshipLearning {
 	 * @param newProjFE
 	 * @return
 	 */
-	private static FeatureWeights getWeightsProjectionMethod(double[] expertFE, double[] newProjFE){
+	private static FeatureWeightsWithScores getWeightsProjectionMethod(double[] expertFE, double[] newProjFE){
 
 		//set the weight as the expert's feature expectation minus the new projection
 		double[] weights = new double[newProjFE.length];
@@ -519,35 +521,7 @@ public class ApprenticeshipLearning {
 			}
 
 		score = Math.sqrt(score);
-		return new FeatureWeights(weights, score);
-	}
-
-	/**
-	 * Class of feature weights which contain the weight values and the associated score given to them
-	 * @author Stephen Brawner
-	 *
-	 */
-	public static class FeatureWeights {
-		private double[] weights;
-		private double score;
-
-		public FeatureWeights(double[] weights, double score) {
-			this.weights = weights.clone();
-			this.score = score;
-		}
-
-		public FeatureWeights(FeatureWeights featureWeights) {
-			this.weights = featureWeights.getWeights();
-			this.score = featureWeights.getScore();
-		}
-
-		public double[] getWeights() {
-			return this.weights.clone();
-		}
-
-		public Double getScore() {
-			return this.score;
-		}
+		return new FeatureWeightsWithScores(weights, score);
 	}
 
 	/**
