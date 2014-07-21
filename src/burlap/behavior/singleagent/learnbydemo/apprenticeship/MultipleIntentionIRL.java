@@ -81,18 +81,6 @@ public class MultipleIntentionIRL {
 			//System.out.println("L: "+logLikelihood+"\n");
 			
 		}
-//		double[] tmp = featureWeights.getWeights();
-//		//double[] tmp = new double[5];
-//		tmp[0] = 37.83580025368231;
-//		tmp[1] = -1.770403828851468;
-//		tmp[2] = -0.31205622899830726;
-//		tmp[3] = -1.662219821890951;
-//		tmp[4] = -0.2991081059366897;
-//		tmp[5] = tmp[1];
-//		tmp[6] = tmp[2];
-//		tmp[7] = tmp[3];
-//		tmp[8] = tmp[4];
-//		featureWeights = new ApprenticeshipLearning.FeatureWeights(tmp,1.0);
 		
 		// Compute new reward functions using new feature weights
 		RewardFunction rewardFunction = 

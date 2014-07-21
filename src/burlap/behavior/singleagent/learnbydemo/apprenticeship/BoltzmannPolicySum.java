@@ -38,21 +38,20 @@ import burlap.oomdp.singleagent.GroundedAction;
 public class BoltzmannPolicySum {
 	private HashMap<StateHashTuple, Double> rewardValues;
 	private HashMap<StateActionTuple, Double> qValues;
-	private HashMap<QFeatureTuple, Double> qPrimeValues;// Jerry
+	private HashMap<QFeatureTuple, Double> qPrimeValues;
 	private HashMap<StateHashTuple, Double> zValues;
 	private HashMap<HashFeatureTuple, Double> zPrimeValues;
-	private HashMap<StateActionTuple, Double> piValues;// Jerry
-	private HashMap<QFeatureTuple, Double> piPrimeValues;// Jerry
-	private HashMap<StateHashTuple, Double> vValues;// Jerry
+	private HashMap<StateActionTuple, Double> piValues;
+	private HashMap<QFeatureTuple, Double> piPrimeValues;
+	private HashMap<StateHashTuple, Double> vValues;
 	private HashMap<StateHashTuple, Double> vLastValues;
-	private HashMap<HashFeatureTuple, Double> vPrimeValues;// Jerry
-	private HashMap<HashFeatureTuple, Double> vLastPrimeValues; // Jerry
+	private HashMap<HashFeatureTuple, Double> vPrimeValues;
+	private HashMap<HashFeatureTuple, Double> vLastPrimeValues; 
 	private QComputablePlanner planner;
 	private StateToFeatureVectorGenerator featureGenerator;
 	private ApprenticeshipLearning.FeatureWeights featureWeights;
 	private double beta;
 	private double gamma;
-	//private ValueFunctionValues valueFunction; //Jerry
 	private StateHashFactory stateHashFactory;
 	
 	public class StateActionTuple{
@@ -103,11 +102,6 @@ public class BoltzmannPolicySum {
 			this.feature = qf.feature;
 		}
 		
-		/**
-		 * This method computes the hashCode for this object and saves it to the <code>hashCode</code> field beloning to the abstract class.
-		 */
-		//public abstract void computeHashCode();
-		
 		
 		@Override
 		public boolean equals(Object other){
@@ -141,11 +135,6 @@ public class BoltzmannPolicySum {
 			this.hash = hf.hash;
 			this.feature = hf.feature;
 		}
-		
-		/**
-		 * This method computes the hashCode for this object and saves it to the <code>hashCode</code> field beloning to the abstract class.
-		 */
-		//public abstract void computeHashCode();
 		
 		
 		@Override
@@ -190,9 +179,6 @@ public class BoltzmannPolicySum {
 		this.featureWeights = featureWeights;
 	}
 	
-//	private void setValueFunction(ValueFunctionValues valueFunction) {
-//		this.valueFunction = valueFunction;
-//	}
 
 	public double getQ(QValue qValue, State state){
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
@@ -215,9 +201,6 @@ public class BoltzmannPolicySum {
 		}
 		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		double qValue = this.rewardValues.get(hash) + this.gamma*innerSum;	
-//		if(qValue>1){
-//			qValue = -0.1;
-//		}
 		StateActionTuple saTuple = new StateActionTuple(state, ga);
 		this.qValues.put(saTuple, qValue);
 		return qValue;
@@ -300,7 +283,6 @@ public class BoltzmannPolicySum {
 		return ZPrime;
 	}
 	
-	// Jerry
 	public double getPi(State state, QValue qValue){
 		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
@@ -311,7 +293,6 @@ public class BoltzmannPolicySum {
 		return computePi(state, qValue);
 	}
 	
-	// Jerry
 	public double computePi(State state, QValue qValue){
 		double Pi = Math.exp(this.beta * this.getQ(qValue, state)) / this.getZ(state);
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
@@ -319,27 +300,17 @@ public class BoltzmannPolicySum {
 		return Pi;
 	}
 	
-	// Jerry
 	public double getPiPrime(State state, QValue qValue, int feature){
 		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
 		QFeatureTuple qfTuple = new QFeatureTuple(saTuple, feature);
 		Double value = this.piPrimeValues.get(qfTuple);
 		if (value != null) {
-//			if (Double.isNaN(value)) {
-//				return 0.0;
-//			}
 			return value.doubleValue();
 		}		
-		value = this.computePiPrime(state, hash, qValue, feature);
-//		if (Double.isNaN(value)) {
-//			return 0.0;
-//		}
-		return value;
-		//return this.computePiPrime(state, hash, qValue, feature);
+		return this.computePiPrime(state, hash, qValue, feature);
 	}
 	
-	// Jerry
 	public double computePiPrime(State state, StateHashTuple hash, QValue qValue, int feature){
 		double piPrime = 0.0;
 		double z = this.getZ(state);
@@ -359,7 +330,6 @@ public class BoltzmannPolicySum {
 		return piPrime;	
 	}
 	
-	// Jerry
 	public double getValue(State state){
 		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		Double value = this.vValues.get(hash);
@@ -370,7 +340,6 @@ public class BoltzmannPolicySum {
 		return computeValue(state, hash, qValues);		
 	}
 	
-	// Jerry
 	public double computeValue(State state, StateHashTuple hash, List<QValue> qValues){
 		double value = 0.0;
 		// value = sum_a pi_i(s,a)*Q_i(s,a)
@@ -382,7 +351,6 @@ public class BoltzmannPolicySum {
 		return value;
 	}
 	
-	// Jerry
 	public double getValuePrime(State state, int feature){
 		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		HashFeatureTuple hfTuple = new HashFeatureTuple(hash, feature);
@@ -394,7 +362,6 @@ public class BoltzmannPolicySum {
 		return computeValuePrime(state, hash, qValues, feature);
 	}
 	
-	// Jerry
 	public double computeValuePrime(State state, StateHashTuple hash, List<QValue> qValues, int feature){
 		double vPrime = 0.0;
 		//vPrime = sum_a (Q_i(s,a)*d(pi_i(s,a)/d w_j) + pi_i(s,a)*d(Q_i(s,a)/d w_j))
