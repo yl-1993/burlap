@@ -13,7 +13,7 @@ import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.TerminalFunction;
 
-public class MLIRLRequest extends EMCluster {
+public class MLIRLRequest {
 
 	/**
 	 * The domain in which IRL is to be performed

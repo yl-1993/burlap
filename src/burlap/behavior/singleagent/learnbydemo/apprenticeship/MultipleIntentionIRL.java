@@ -7,8 +7,8 @@ import java.util.Random;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.QValue;
-
 import burlap.behavior.singleagent.auxiliary.StateReachability;
+import burlap.behavior.singleagent.learnbydemo.apprenticeship.requests.EMMLIRLRequest;
 import burlap.behavior.singleagent.learnbydemo.apprenticeship.requests.MLIRLRequest;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
@@ -70,8 +70,8 @@ public class MultipleIntentionIRL {
 				break;
 			}
 			// Compute log likelihood of data (L), L is supposed to be larger and larger
-			//double logLikelihood = computeLogLikelihood(trajectoryWeights, bPolicySum, trajectories);
-			//System.out.println("L: "+logLikelihood+"\n");
+			double logLikelihood = computeLogLikelihood(trajectoryWeights, bPolicySum, trajectories);
+			System.out.println("L: "+logLikelihood+"\n");
 		}
 		
 		// Compute new reward functions using new feature weights
@@ -87,22 +87,92 @@ public class MultipleIntentionIRL {
 		
 		// Evaluate the behavior of the new policy
 		String res = policy.evaluateBehavior(request.getStartStateGenerator().generateState(), rewardFunction, terminalFunction).getActionSequenceString();
-		System.out.println("res: "+res+"\n");
+		System.out.println("ActionSequence: "+res+"\n");
 		
 		System.out.println("mlirl finish!");
 		
 		return policy;
 	}
 
-
-	public static void runEM(MLIRLRequest request) {
+	
+	public static BoltzmannPolicySum runMLIRL(MLIRLRequest request, FeatureWeights featureWeights){
+		// Get all required items from the request object
+		Domain domain = request.getDomain();
+		StateToFeatureVectorGenerator featureGenerator = request.getFeatureGenerator();
+		TerminalFunction terminalFunction = request.getTerminalFunction();
+		Double gamma = request.getGamma();
+		State startState = request.getStartStateGenerator().generateState();
+		StateHashFactory hashFactory = request.getStateHashFactory();
+		double beta = request.getBeta();
+		double epsilon = request.getEpsilon();
+		List<Double> trajectoryWeights = request.getTrajectoryWeights();
+		List<EpisodeAnalysis> trajectories = request.getExpertEpisodes();
+		OOMDPPlanner planner = request.getPlanner();
+		int numIterations = request.getMaxIterations();
+		
+		FeatureWeights lastFeatureWeights = new FeatureWeights(featureWeights);
+		BoltzmannPolicySum bPolicySum = new BoltzmannPolicySum(
+				(QComputablePlanner)planner, featureGenerator, featureWeights, beta, gamma);
+		BoltzmannPolicySum lastBPolicySum = new BoltzmannPolicySum(bPolicySum);
+		// TODO set a realistic alpha
+		double alpha = 1.0;
+		double squareError = 0.0;
+		// for t = 1 to M do
+		for (int i = 0; i < numIterations; i++) {
+			// Compute new feature weights through gradient ascent, theta_{t+1} = theta_t + alpha * G(L)
+			lastFeatureWeights = computeNewFeatureWeightsViaGradientAscent
+					(featureWeights, trajectoryWeights, lastBPolicySum,
+							 trajectories, startState, domain, hashFactory, alpha);
+			alpha *= 0.99;
+			if(isValid(lastFeatureWeights.getWeights())) {
+				// Compute error
+				squareError = computeSquareError(lastFeatureWeights, featureWeights);
+				// Update
+				featureWeights = lastFeatureWeights;
+				bPolicySum = lastBPolicySum;
+			}
+			else{
+				break;
+			}
+			// Check Convergence
+			if(squareError < epsilon){
+				break;
+			}
+			// Compute log likelihood of data (L), L is supposed to be larger and larger
+			double logLikelihood = computeLogLikelihood(trajectoryWeights, bPolicySum, trajectories);
+			System.out.println("L: "+logLikelihood+"\n");
+		}
+		
+//		// Compute new reward functions using new feature weights
+//		RewardFunction rewardFunction = 
+//				ApprenticeshipLearning.generateRewardFunction(featureGenerator, featureWeights);
+//		
+//		// Reset planner to accommodate new reward function
+//		planner.resetPlannerResults();
+//		planner.plannerInit(domain, rewardFunction, terminalFunction, gamma , hashFactory);
+//		
+//		// From feature weights, compute Q_theta_t, and generate a new policy from the Q function
+//		Policy policy = computePolicyFromRewardWeights(planner, featureWeights, featureGenerator, startState, beta);
+//		
+//		// Evaluate the behavior of the new policy
+//		String res = policy.evaluateBehavior(request.getStartStateGenerator().generateState(), rewardFunction, terminalFunction).getActionSequenceString();
+//		System.out.println("ActionSequence: "+res+"\n");
+//		
+//		System.out.println("mlirl finish!");
+		
+		return bPolicySum;
+	}
+	
+	
+	public static List<double[]> runEM(EMMLIRLRequest request) {
 		
 		// Get all required items for EM
 		int numberClusters = request.getNumberClusters();
 		List<EpisodeAnalysis> episodes = request.getExpertEpisodes();
+		int numberTrajectories = episodes.size();
 		int featureWeightLength = request.getFeatureVectorLength();
 		int numberIterations = request.getMaxIterations();
-		
+		numberIterations = 3;
 		List<double[]> featureWeightClusters =
 				new ArrayList<double[]>(numberClusters);
 		
@@ -118,13 +188,37 @@ public class MultipleIntentionIRL {
 			featureWeightClusters.add(weights.getWeights());
 		}
 		
+		// Suppose every cluster has the same probability
+		List<double[]> trajectoryInClustersProbabilities = new ArrayList<>(numberTrajectories);
+		double[] trajectoryInClustersProbability = new double[numberClusters];
+		for (int j = 0; j < numberClusters; j++) {
+			trajectoryInClustersProbability[j] = 1.0/(numberClusters*numberTrajectories);
+		}
+		for (int i = 0; i < numberTrajectories; i++) {			
+			trajectoryInClustersProbabilities.add(trajectoryInClustersProbability);
+		}
+		
 		// Generate policies from initial values
-		List<Policy> policies = computeClusterPolicies(request, featureWeightClusters);
+		// run MLIRL firstly
+		List<BoltzmannPolicySum> bPolicySums = computeClusterPolicies(request, featureWeightClusters, trajectoryInClustersProbabilities);
 		
 		// repeat until target number of iterations completed
 		for (int i = 0; i < numberIterations; i++) {
-			stepEM(request, episodes, featureWeightClusters, clusterPriorProbabilities, policies);
+			stepEM(request, episodes, featureWeightClusters, clusterPriorProbabilities, bPolicySums);
 		}
+		
+		trajectoryInClustersProbabilities = computeTrajectoryInClusterProbabilities(
+				bPolicySums, episodes, clusterPriorProbabilities);
+		
+		for (int i = 0; i < trajectoryInClustersProbabilities.size(); i++) {
+			double[] tmp = trajectoryInClustersProbabilities.get(i);
+			for (int j = 0; j < tmp.length; j++) {
+				System.out.println(tmp[j]+",");
+			}
+			System.out.println("\n");
+		}
+		
+		return featureWeightClusters;
 	}
 
 	/**
@@ -155,7 +249,8 @@ public class MultipleIntentionIRL {
 	 * @param beta
 	 * @return A BoltzmannQPolicy generated from the feature weights
 	 */
-	protected static Policy computePolicyFromRewardWeights(OOMDPPlanner planner, 
+	// TODO protected or public???
+	public static Policy computePolicyFromRewardWeights(OOMDPPlanner planner, 
 			FeatureWeights featureWeights,
 			StateToFeatureVectorGenerator featureGenerator, State startState, double beta) {
 
@@ -171,7 +266,7 @@ public class MultipleIntentionIRL {
 	 * Computes L = sum_i w_i sum_{(s,a) \in \xi_i} log(pi_theta_t(s,a))
 	 * Computes the log likelihood of the trajectories given a policy and weights of each trajectory
 	 * @param trajectoryWeights
-	 * @param policy
+	 * @param bPolicySum
 	 * @param trajectories
 	 * @return the log-likelihood of the trajectories
 	 */
@@ -228,6 +323,7 @@ public class MultipleIntentionIRL {
 				// if sum is NAN, stop it and use weights generated by last iteration
 				if(Double.isNaN(sum)){
 					System.out.println("NAN!!!");
+					//return 0.0;
 				}
 			}
 			lPrimeValue += trajectoryWeights.get(i) * sum;
@@ -254,7 +350,7 @@ public class MultipleIntentionIRL {
 		double lPrimeValue = 0.0;
 		double[] weights = featureWeights.getWeights();
 		double[] dWeights = new double[weights.length];
-		// weights and rewards will not change for one iteration
+		// weights and rewards will not change during one iteration
 		// compute new rewards
 		updateRewards(episodes, bPolicySum, startState, domain, hashFactory);
 		// k iterations
@@ -393,22 +489,22 @@ public class MultipleIntentionIRL {
 	 * @param clusterPriorProbabilities
 	 * @param policies
 	 */
-	protected static void stepEM(MLIRLRequest request, List<EpisodeAnalysis> episodes, List<double[]> featureWeightClusters,
-			double[] clusterPriorProbabilities, List<Policy> policies) {
+	protected static void stepEM(EMMLIRLRequest request, List<EpisodeAnalysis> episodes, 
+			List<double[]> featureWeightClusters,
+			double[] clusterPriorProbabilities, 
+			List<BoltzmannPolicySum> bPolicySums) {
 		
 		// E Step
 		// Compute z_ij = prod pi * rho / Z
 		List<double[]> trajectoryInClustersProbabilities = computeTrajectoryInClusterProbabilities(
-				policies, episodes, clusterPriorProbabilities);
+				bPolicySums, episodes, clusterPriorProbabilities);
 		
 		// M Step
 		// Compute rho_l = sum z_il / N
 		clusterPriorProbabilities = computePriors(trajectoryInClustersProbabilities);
 		
 		// Compute theta_l via MLIRL and generate appropriate policies
-		policies = computeClusterPolicies(request, trajectoryInClustersProbabilities);
-		
-		//policies = this.computePolicies(request.getPlanner(), featureWeightClusters);
+		bPolicySums = computeClusterPolicies(request, featureWeightClusters, trajectoryInClustersProbabilities);
 	}
 	
 	/**
@@ -420,13 +516,15 @@ public class MultipleIntentionIRL {
 	 * @param clusterPriorProbabilities Prior probabilities of each cluster
 	 * @return The probabilities of each trajectory belonging to each cluster.
 	 */
-	protected static List<double[]> computeTrajectoryInClusterProbabilities(List<Policy> policies, List<EpisodeAnalysis> trajectories, double[] clusterPriorProbabilities) {
+	protected static List<double[]> computeTrajectoryInClusterProbabilities(
+			List<BoltzmannPolicySum> bPolicySums, List<EpisodeAnalysis> trajectories, 
+			double[] clusterPriorProbabilities) {
+		
 		List<double[]> trajectoryInClusterProbabilities = 
 				new ArrayList<double[]>(trajectories.size());
-		
-		int numberClusters = policies.size();
+		int numberClusters = clusterPriorProbabilities.length;
 		EpisodeAnalysis episode;
-		Policy policy;
+		BoltzmannPolicySum bPolicySum;
 		double prior;
 		double sum;
 		
@@ -434,10 +532,11 @@ public class MultipleIntentionIRL {
 			double[] probabilities = new double[numberClusters];
 			sum = 0;
 			for (int j = 0; j < numberClusters; j++) {
+				probabilities[j] = 0.0;
 				episode = trajectories.get(i);
-				policy = policies.get(j);
+				bPolicySum = bPolicySums.get(j);
 				prior = clusterPriorProbabilities[j];
-				probabilities[j] = computeTrajectoryInClusterProbability(episode, policy, prior);
+				probabilities[j] = computeTrajectoryInClusterProbability(episode, bPolicySum, prior);
 				sum += probabilities[j];
 			}
 			
@@ -459,18 +558,24 @@ public class MultipleIntentionIRL {
 	 * @param prior
 	 * @return An unnormalized probability that the trajectory belongs to this cluster
 	 */
-	protected static double computeTrajectoryInClusterProbability(EpisodeAnalysis trajectory, Policy policy, double prior) {
+	protected static double computeTrajectoryInClusterProbability(EpisodeAnalysis trajectory, 
+			BoltzmannPolicySum bPolicySum, double prior) {
 		double product = prior;
 		List<GroundedAction> actions = trajectory.actionSequence;
 		List<State> states = trajectory.stateSequence;
+		List<Double> rewards = trajectory.rewardSequence;
 		int trajectoryLength = Math.min(actions.size(), states.size());
 		
 		State state;
 		GroundedAction action;
+		Double reward;
 		for (int i = 0; i < trajectoryLength; i++) {
 			state = states.get(i);
 			action = actions.get(i);
-			product *= policy.getProbOfAction(state, action);
+			reward = rewards.get(i);
+			//product *= policy.getProbOfAction(state, action); //getPi
+			QValue qValue = new QValue(state, action, reward);
+			product *= bPolicySum.getPi(state, qValue);
 		}
 		
 		return product;	
@@ -484,6 +589,7 @@ public class MultipleIntentionIRL {
 	 * @return The prior probabilities of each cluster
 	 */
 	protected static double[] computePriors(List<double[]> trajectoryInClustersProbabilities) {
+		
 		int numberClusters = trajectoryInClustersProbabilities.size();
 		int numberTrajectories = trajectoryInClustersProbabilities.get(0).length;
 		double[] priors = new double[numberClusters];
@@ -506,23 +612,39 @@ public class MultipleIntentionIRL {
 	 * Generates a policies for each cluster given probabilities of the trajectories belonging to each cluster
 	 * It computes this via MLIRL
 	 * @param request
-	 * @param trajectoryInClustersProbabilities
+	 * @param featureWeightClusters
+	 * @param trajectoryInClustersProbabilities (number of trajectories * number of cluster)
 	 * @return The policies generated for each cluster
 	 */
-	protected static List<Policy> computeClusterPolicies(MLIRLRequest request, List<double[]> trajectoryInClustersProbabilities) {
-		int numberClusters = trajectoryInClustersProbabilities.size();
-		MLIRLRequest newRequest = new MLIRLRequest(request);
-		List<Policy> policies = new ArrayList<Policy>(numberClusters);
-		Policy policy;
-		double[] trajectoryWeights;
+	protected static List<BoltzmannPolicySum> computeClusterPolicies(EMMLIRLRequest request,
+			List<double[]> featureWeightClusters,
+			List<double[]> trajectoryInClustersProbabilities) {
+		
+		int numberClusters = featureWeightClusters.size();
+		EMMLIRLRequest newRequest = new EMMLIRLRequest(request);
+		List<BoltzmannPolicySum> bPolicySums = new ArrayList<BoltzmannPolicySum>(numberClusters);
+		BoltzmannPolicySum bPolicySum;
+		double[] trajectoryWeights = new double[trajectoryInClustersProbabilities.size()];
 		
 		for (int i = 0; i < numberClusters; i++) {
-			trajectoryWeights = trajectoryInClustersProbabilities.get(i);
+			for (int j = 0; j < trajectoryInClustersProbabilities.size(); j++) {
+				trajectoryWeights[j] = trajectoryInClustersProbabilities.get(j)[i];
+			}
 			newRequest.setTrajectoryWeights(trajectoryWeights);
-			policy = runMLIRL(newRequest);
-			policies.add(policy);
+			FeatureWeights featureWeights = new FeatureWeights(featureWeightClusters.get(i));
+			bPolicySum = runMLIRL(newRequest, featureWeights);
+			bPolicySums.add(bPolicySum);
 		}
 		
-		return policies;
+		return bPolicySums;
 	}
+	
+	protected static boolean isValid(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			if(Double.isNaN(array[i]))
+				return false;
+		}
+		return true;
+	}
+	
 }

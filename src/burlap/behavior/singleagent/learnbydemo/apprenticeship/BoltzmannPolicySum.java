@@ -156,6 +156,26 @@ public class BoltzmannPolicySum {
 		this.featureWeights = featureWeights;
 	}
 	
+	public BoltzmannPolicySum(BoltzmannPolicySum bPolicySum){
+		this.planner = bPolicySum.planner;
+		this.beta = bPolicySum.beta;
+		this.gamma = bPolicySum.gamma;
+		this.stateHashFactory = ((OOMDPPlanner)bPolicySum.planner).getHashingFactory();
+		this.rewardValues = new HashMap<>(bPolicySum.rewardValues);
+		this.qValues = new HashMap<>(bPolicySum.qValues);
+		this.qPrimeValues = new HashMap<>(bPolicySum.qPrimeValues);
+		this.zValues = new HashMap<>(bPolicySum.zValues);
+		this.zPrimeValues = new HashMap<>(bPolicySum.zPrimeValues);
+		this.piValues = new HashMap<>(bPolicySum.piValues);
+		this.piPrimeValues = new HashMap<>(bPolicySum.piPrimeValues);
+		this.vValues = new HashMap<>(bPolicySum.vValues);
+		this.vLastValues = new HashMap<>(bPolicySum.vLastValues);
+		this.vPrimeValues = new HashMap<>(bPolicySum.vPrimeValues);
+		this.vLastPrimeValues = new HashMap<>(bPolicySum.vLastPrimeValues);
+		this.featureGenerator = bPolicySum.featureGenerator;
+		this.featureWeights = new FeatureWeights(bPolicySum.featureWeights);
+	}
+	
 
 	public double getQ(QValue qValue, State state){
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
@@ -415,7 +435,11 @@ public class BoltzmannPolicySum {
 	}
 	
 	public void updateFeatureWeights(double[] weights){
-		this.featureWeights = new FeatureWeights(weights); // TODO: The second parameter is useless here 
+		this.featureWeights = new FeatureWeights(weights);  
+	}
+	
+	public FeatureWeights getFeatureWeights(){
+		return this.featureWeights;
 	}
 	
 	public void clearAllValuesExceptV(){
