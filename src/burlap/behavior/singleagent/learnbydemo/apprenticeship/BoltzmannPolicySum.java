@@ -294,12 +294,23 @@ public class BoltzmannPolicySum {
 		if (value != null) {
 			return value.doubleValue();
 		}	
-		return computePi(state, qValue);
+		List<QValue> qValues = this.planner.getQs(state);
+		return computePi(state, qValues, qValue);
 	}
 	
-	public double computePi(State state, QValue qValue){
-		double Pi = Math.exp(this.beta * this.getQ(qValue, state)) / this.getZ(state);
+	public double computePi(State state, List<QValue> qValues, QValue qValue){
+		double Pi = 0.0;
+		double innerSum = 0.0;
+		double m = this.getMaxQFromState(state);
+		for (QValue q : qValues) {
+			innerSum += Math.exp(this.beta*(this.getQ(q, state) - m));
+		}		
+		Pi = Math.exp(this.beta*(this.getQ(qValue, state) - m) - Math.log(innerSum));
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
+		if (Pi == 0) {
+			Pi = 0.0001;
+			Pi = Math.exp(this.beta*(this.getQ(qValue, state) - m) - Math.log(innerSum));
+		}
 		this.piValues.put(saTuple, Pi);
 		return Pi;
 	}
@@ -312,22 +323,24 @@ public class BoltzmannPolicySum {
 		if (value != null) {
 			return value.doubleValue();
 		}		
-		return this.computePiPrime(state, hash, qValue, feature);
+		List<QValue> qValues = this.planner.getQs(state);
+		return this.computePiPrime(state, hash, qValues, qValue, feature);
 	}
 	
-	public double computePiPrime(State state, StateHashTuple hash, QValue qValue, int feature){
+	public double computePiPrime(State state, StateHashTuple hash, List<QValue> qValues, QValue qValue, int feature){
 		double piPrime = 0.0;
-		double z = this.getZ(state);
-		double zPrime = this.getZPrime(state, feature);
-		double q = this.getQ(qValue, state);
-		double qPrime = this.getQPrime(qValue, state, feature);
-		//
-		double den = z*z;
-		double num = this.beta * z * qPrime / den - zPrime / den;
+		double firstItem = 0.0, secondItem = 0.0;
+		double innerSum = 0.0;
+		double m = this.getMaxQFromState(state);
 		
-		//piPrime = this.beta*getPi(state, qValue)*qPrime - getPi(state, qValue)*zPrime/z;
-		piPrime = num*Math.exp(this.beta * q);
-		
+		for (QValue q : qValues) {
+			firstItem += (this.getQPrime(qValue, state, feature) - this.getQPrime(q, state, feature))
+					*Math.exp(this.beta*(this.getQ(q, state) - m));
+			innerSum += Math.exp(this.beta*(this.getQ(q, state) - m));
+		}	
+		secondItem = Math.exp(Math.log(this.beta) + this.beta*this.getQ(qValue, state) - this.beta*m
+				-2*Math.log(innerSum));
+		piPrime = firstItem * secondItem;
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
 		QFeatureTuple qfTuple = new QFeatureTuple(saTuple,feature);
 		this.piPrimeValues.put(qfTuple, piPrime);
@@ -376,6 +389,17 @@ public class BoltzmannPolicySum {
 		HashFeatureTuple hfTuple = new HashFeatureTuple(hash, feature);
 		this.vPrimeValues.put(hfTuple, vPrime);
 		return vPrime;
+	}
+	
+	public double getMaxQFromState(State state){
+		List<QValue> qValues = this.planner.getQs(state);
+		double m = Double.MIN_VALUE;
+		for (QValue q : qValues) {
+			if(this.getQ(q, state) > m){
+				m = this.getQ(q, state);
+			}
+		}
+		return m;
 	}
 	
 	public void updateLastValue(State state){
