@@ -172,7 +172,7 @@ public class MultipleIntentionIRL {
 		int numberTrajectories = episodes.size();
 		int featureWeightLength = request.getFeatureVectorLength();
 		int numberIterations = request.getMaxIterations();
-		numberIterations = 3;
+		numberIterations = 10;
 		List<double[]> featureWeightClusters =
 				new ArrayList<double[]>(numberClusters);
 		
@@ -210,20 +210,8 @@ public class MultipleIntentionIRL {
 		trajectoryInClustersProbabilities = computeTrajectoryInClusterProbabilities(
 				bPolicySums, episodes, clusterPriorProbabilities);
 		
-		for (int i = 0; i < trajectoryInClustersProbabilities.size(); i++) {
-			double[] tmp = trajectoryInClustersProbabilities.get(i);
-			int index = 0;
-			double m = Double.MIN_VALUE;
-			for (int j = 0; j < tmp.length; j++) {
-				if(tmp[j] > m){
-					m = tmp[j];
-					index = j;
-				}
-				System.out.println(tmp[j]+",");
-			}
-			System.out.println(index);
-			System.out.println("\n");
-		}
+		// record the probabilities of each trajectory in each cluster
+		request.setTrajectoryInClustersProbabilities(trajectoryInClustersProbabilities);
 		
 		return featureWeightClusters;
 	}
@@ -238,7 +226,7 @@ public class MultipleIntentionIRL {
 		double[] weights = new double[length];
 		double sum = 0;
 		for (int i = 0; i < length; i++) {
-			weights[i] = -1 + random.nextDouble() * (1 - (-1));
+			weights[i] = random.nextDouble();
 			sum += weights[i];
 		}
 		for (int i = 0; i < length; i++) {

@@ -288,7 +288,6 @@ public class BoltzmannPolicySum {
 	}
 	
 	public double getPi(State state, QValue qValue){
-		StateHashTuple hash = this.stateHashFactory.hashState(state);
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
 		Double value = this.piValues.get(saTuple);
 		if (value != null) {
@@ -307,10 +306,6 @@ public class BoltzmannPolicySum {
 		}		
 		Pi = Math.exp(this.beta*(this.getQ(qValue, state) - m) - Math.log(innerSum));
 		StateActionTuple saTuple = new StateActionTuple(state, (GroundedAction)qValue.a);
-		if (Pi == 0) {
-			Pi = 0.0001;
-			Pi = Math.exp(this.beta*(this.getQ(qValue, state) - m) - Math.log(innerSum));
-		}
 		this.piValues.put(saTuple, Pi);
 		return Pi;
 	}

@@ -14,6 +14,10 @@ public class EMMLIRLRequest extends MLIRLRequest {
 	 */
 	protected int									numberClusters;
 	
+	List<double[]> 				 trajectoryInClustersProbabilities;
+	
+	double[] 							 clusterPriorProbabilities;
+	
 	public static final int 			DEFAULT_NUMBERCLUSTERS = 1;
 	
 	public EMMLIRLRequest(){
@@ -53,8 +57,23 @@ public class EMMLIRLRequest extends MLIRLRequest {
 		this.numberClusters = numberClusters;
 	}
 	
+	public void setTrajectoryInClustersProbabilities(List<double[]> trajectoryInClustersProbabilities){
+		this.trajectoryInClustersProbabilities = trajectoryInClustersProbabilities;
+	}
+	
+	public void setClusterPriorProbabilities(double[] clusterPriorProbabilities){
+		this.clusterPriorProbabilities = clusterPriorProbabilities;
+	}
+	
 	public int getNumberClusters() {
 		return this.numberClusters;
 	}
 	
+	public List<double[]> getTrajectoryInClustersProbabilities(){
+		return this.trajectoryInClustersProbabilities;
+	}
+	
+	public double[] getClusterPriorProbabilities(){
+		return this.clusterPriorProbabilities;
+	}
 }
